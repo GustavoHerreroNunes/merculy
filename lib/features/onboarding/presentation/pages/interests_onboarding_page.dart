@@ -170,18 +170,37 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
                     int index = entry.key;
                     TextEditingController controller = entry.value;
                     FocusNode focusNode = _otherFocusNodes[index];
+                    final hasText = controller.text.isNotEmpty;
 
                     return SizedBox(
-                      width: 150,
+                      width: 120, // Set a specific width to match chip size
+                      height: 60, // Match the height of ChoiceChip more closely
                       child: TextField(
                         controller: controller,
                         focusNode: focusNode,
+                        style: TextStyle(
+                          color: hasText ? AppColors.chipTextSelected : AppColors.chipTextUnselected,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14, // Match chip text size
+                        ),
                         decoration: InputDecoration(
-                          hintText: 'Outro...',
+                          hintText: 'Outros...',
+                          hintStyle: const TextStyle(
+                            color: AppColors.chipTextUnselected,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: const BorderSide(
                               color: AppColors.chipUnselected,
+                              width: 1.5,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: BorderSide(
+                              color: hasText ? AppColors.chipSelected : AppColors.chipUnselected,
                               width: 1.5,
                             ),
                           ),
@@ -192,17 +211,20 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
                               width: 1.5,
                             ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
                           filled: true,
-                          fillColor: Colors.white,
+                          fillColor: hasText ? AppColors.chipSelected : Colors.white,
+                          isDense: true, // Makes the field more compact
                         ),
                         onTap: () {},
                         onChanged: (text) {
-                          if (text.isNotEmpty && !_selectedInterests.contains(text)) {
-                            _selectedInterests.add(text);
-                          } else if (text.isEmpty && _selectedInterests.contains(text)) {
-                            _selectedInterests.remove(text);
-                          }
+                          setState(() {
+                            if (text.isNotEmpty && !_selectedInterests.contains(text)) {
+                              _selectedInterests.add(text);
+                            } else if (text.isEmpty && _selectedInterests.contains(text)) {
+                              _selectedInterests.remove(text);
+                            }
+                          });
                         },
                         onEditingComplete: () {
                           focusNode.unfocus();

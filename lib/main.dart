@@ -4,13 +4,14 @@ import 'core/constants/color_palette.dart';
 import 'features/onboarding/presentation/pages/welcome_page.dart';
 import 'features/onboarding/presentation/pages/first_access_page.dart';
 import 'features/onboarding/presentation/pages/password_definition_page.dart';
-import 'features/onboarding/presentation/pages/welcome_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/interests_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/newsletter_format_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/newsletter_frequency_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/newsletter_history_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/newsletter_channel_onboarding_page.dart';
+import 'features/onboarding/presentation/pages/onboarding_finished_page.dart';
 import 'features/onboarding/presentation/onboarding_controller.dart';
+import 'features/newsletters/presentation/pages/my_newsletters_screen.dart';
 
 void main() {
   runApp(const MerculyApp());
@@ -51,18 +52,25 @@ class OnboardingFlow extends StatelessWidget {
       case 2:
         return const PasswordDefinitionPage();
       case 3:
-        return const WelcomeOnboardingPage();
-      case 4:
-        // You may want to pass userName from controller.state.user?.name
         return const InterestsOnboardingPage(userName: '');
-      case 5:
+      case 4:
         return const NewsletterFormatOnboardingPage();
-      case 6:
+      case 5:
         return const NewsletterFrequencyOnboardingPage();
-      case 7:
+      case 6:
         return const NewsletterHistoryOnboardingPage();
-      case 8:
+      case 7:
         return const NewsletterChannelOnboardingPage();
+      case 8:
+        return OnboardingFinishedPage(
+          onFinalize: () {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const MyNewslettersScreen(),
+              ),
+            );
+          },
+        );
       default:
         return const WelcomePage();
     }

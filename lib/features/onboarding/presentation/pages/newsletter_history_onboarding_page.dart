@@ -13,11 +13,6 @@ class NewsletterHistoryOnboardingPage extends StatefulWidget {
 
 class _NewsletterHistoryOnboardingPageState extends State<NewsletterHistoryOnboardingPage> {
   final TextEditingController _controller = TextEditingController();
-  final List<String> _suggestions = [
-    'Petrobras no Baixo do Amazonas',
-    'Tarifas EUA',
-    'Eleições 2024',
-  ];
   final List<String> _userStories = [];
   final int _maxStories = 3;
   bool _canSave = false;
@@ -55,14 +50,6 @@ class _NewsletterHistoryOnboardingPageState extends State<NewsletterHistoryOnboa
     setState(() {
       _userStories.removeAt(index);
     });
-  }
-
-  void _selectSuggestion(String suggestion) {
-    if (_userStories.length < _maxStories) {
-      setState(() {
-        _userStories.add(suggestion);
-      });
-    }
   }
 
   void _saveAndContinue() {
@@ -208,9 +195,10 @@ class _NewsletterHistoryOnboardingPageState extends State<NewsletterHistoryOnboa
 
               
               // Bottom buttons
-              Row(
+              Column(
                 children: [
-                  Expanded(
+                  SizedBox(
+                    width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _userStories.isNotEmpty ? _saveAndContinue : null,
                       style: ElevatedButton.styleFrom(
@@ -228,7 +216,7 @@ class _NewsletterHistoryOnboardingPageState extends State<NewsletterHistoryOnboa
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(height: 16),
                   TextButton(
                     onPressed: _skip,
                     style: TextButton.styleFrom(

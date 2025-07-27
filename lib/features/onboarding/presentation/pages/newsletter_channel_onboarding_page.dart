@@ -161,27 +161,43 @@ class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboa
                   },
                 ),
               ),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    context.read<OnboardingController>().setFollowedChannels(_followedChannels.toList());
-                    // TODO: Finish onboarding (navigate to home or summary)
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.read<OnboardingController>().setFollowedChannels(_followedChannels.toList());
+                        context.read<OnboardingController>().nextStep();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Continue',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
                     ),
-                    elevation: 0,
                   ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      context.read<OnboardingController>().setFollowedChannels([]);
+                      context.read<OnboardingController>().nextStep();
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.textMedium,
+                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    child: const Text('Pular'),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 24),
             ],
