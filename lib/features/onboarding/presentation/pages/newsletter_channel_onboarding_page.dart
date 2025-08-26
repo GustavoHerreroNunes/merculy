@@ -51,8 +51,8 @@ class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboa
             children: [
               Row(
                 children: [
-                  Image.asset(AppAssets.logo, width: 60, height: 60),
-                  const SizedBox(width: 12),
+                  Image.asset(AppAssets.logo, width: 150, height: 150),
+                  const SizedBox(width: 5),
                   const Expanded(
                     child: Text(
                       'Ótimo, estamos quase acabando!',
@@ -72,6 +72,15 @@ class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboa
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Selecione os canais de seu interesse ou pule esta etapa',
+                style: TextStyle(
+                  fontSize: 14.0,
+                  color: AppColors.textMedium,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
               const SizedBox(height: 16),
@@ -166,10 +175,10 @@ class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboa
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: _followedChannels.isNotEmpty ? () {
                         context.read<OnboardingController>().setFollowedChannels(_followedChannels.toList());
                         context.read<OnboardingController>().nextStep();
-                      },
+                      } : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,

@@ -13,7 +13,7 @@ class NewsletterFrequencyOnboardingPage extends StatefulWidget {
 
 class _NewsletterFrequencyOnboardingPageState extends State<NewsletterFrequencyOnboardingPage> {
   final List<String> _days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  final Set<int> _selectedDays = {1};
+  final Set<int> _selectedDays = {};
   TimeOfDay _selectedTime = const TimeOfDay(hour: 7, minute: 45);
 
   Future<void> _pickTime(BuildContext context) async {
@@ -48,8 +48,8 @@ class _NewsletterFrequencyOnboardingPageState extends State<NewsletterFrequencyO
             children: [
               Row(
                 children: [
-                  Image.asset(AppAssets.logo, width: 60, height: 60),
-                  const SizedBox(width: 12),
+                  Image.asset(AppAssets.logo, width: 150, height: 150),
+                  const SizedBox(width: 5),
                   const Expanded(
                     child: Text(
                       'Preferências anotadas. Agora vamos falar sobre periodicidade.',
@@ -69,6 +69,15 @@ class _NewsletterFrequencyOnboardingPageState extends State<NewsletterFrequencyO
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Selecione pelo menos um dia da semana',
+                style: TextStyle(
+                  fontSize: 14.0,
+                  color: _selectedDays.isEmpty ? Colors.red : AppColors.textMedium,
+                  fontStyle: FontStyle.italic,
                 ),
               ),
               const SizedBox(height: 24),
@@ -128,13 +137,13 @@ class _NewsletterFrequencyOnboardingPageState extends State<NewsletterFrequencyO
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: _selectedDays.isNotEmpty ? () {
                     context.read<OnboardingController>().setFrequency(
                       _selectedDays.toList(),
                       _selectedTime.format(context),
                     );
                     context.read<OnboardingController>().nextStep();
-                  },
+                  } : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

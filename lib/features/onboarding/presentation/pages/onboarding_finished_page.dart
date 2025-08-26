@@ -15,8 +15,8 @@ class OnboardingFinishedPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -30,33 +30,10 @@ class OnboardingFinishedPage extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 60),
+              const SizedBox(height: 48),
               
-              // Merculy mascot illustration
-              Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Image.asset(
-                    AppAssets.logo,
-                    width: 150,
-                    height: 150,
-                  ),
-                ),
-              ),
-              
-              const SizedBox(height: 60),
+              Image(image: AssetImage(AppAssets.logo), width: 250, height: 250),
+              const SizedBox(height: 48.0),
               
               const Text(
                 'Pronto, acabamos!',

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
-import '../../../../core/constants/app_assets.dart';
 import '../onboarding_controller.dart';
 import '../../domain/entities/user.dart';
 

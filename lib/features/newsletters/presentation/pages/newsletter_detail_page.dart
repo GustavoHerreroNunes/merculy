@@ -176,25 +176,36 @@ class NewsletterDetailPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cover Image Placeholder
-          if (headline.coverImage != null)
-            Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                color: Colors.grey[300],
-              ),
-              child: const Center(
-                child: Icon(Icons.image, size: 50, color: Colors.grey),
-              ),
+          // Cover Image - Always show for main news
+          Container(
+            height: 200,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              color: Colors.grey[300],
+              image: headline.coverImage != null 
+                ? DecorationImage(
+                    image: NetworkImage(headline.coverImage!),
+                    fit: BoxFit.cover,
+                    onError: (error, stackTrace) {
+                      // Fallback to placeholder if image fails to load
+                    },
+                  )
+                : null,
             ),
+            child: headline.coverImage == null 
+              ? const Center(
+                  child: Icon(Icons.image, size: 50, color: Colors.grey),
+                )
+              : null,
+          ),
           
           Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // News title - Always show
                 Text(
                   headline.title,
                   style: const TextStyle(
@@ -205,29 +216,32 @@ class NewsletterDetailPage extends StatelessWidget {
                   ),
                 ),
                 
-                if (headline.summary != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    headline.summary!,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textMedium,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
+                const SizedBox(height: 12),
                 
-                if (headline.mainTopics != null && headline.mainTopics!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Tópicos importantes:',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
-                    ),
+                // Summary - Always show for main news (provide default if null)
+                Text(
+                  headline.summary ?? 'Leia mais para descobrir os detalhes desta notícia importante.',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textMedium,
+                    height: 1.5,
                   ),
-                  const SizedBox(height: 8),
+                ),
+                
+                // Important topics - Always show section for main news
+                const SizedBox(height: 16),
+                const Text(
+                  'Tópicos importantes:',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Show topics or default message
+                if (headline.mainTopics != null && headline.mainTopics!.isNotEmpty) 
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -248,8 +262,23 @@ class NewsletterDetailPage extends StatelessWidget {
                         ),
                       );
                     }).toList(),
+                  )
+                else
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Text(
+                      'Assunto Geral',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
-                ],
                 
                 const SizedBox(height: 16),
                 InkWell(
@@ -282,12 +311,31 @@ class NewsletterDetailPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Outras Notícias',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
+        // Header with magnifier icon and background
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: newsletter.primaryColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.search,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Outras Notícias',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),
@@ -297,8 +345,11 @@ class NewsletterDetailPage extends StatelessWidget {
   }
 
   Widget _buildOtherNewsCard(NewsHeadline headline) {
+    // Get the first source for display
+    final source = headline.sources.isNotEmpty ? headline.sources.first : null;
+    
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -313,14 +364,54 @@ class NewsletterDetailPage extends StatelessWidget {
       ),
       child: InkWell(
         onTap: () => _openArticle(headline),
-        child: Text(
-          headline.title,
-          style: const TextStyle(
-            fontSize: 16,
-            color: AppColors.textDark,
-            fontWeight: FontWeight.w500,
-            height: 1.3,
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Source address
+            if (source != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: newsletter.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  source.fantasyName,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: newsletter.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+            
+            // News title
+            Text(
+              headline.title,
+              style: const TextStyle(
+                fontSize: 16,
+                color: AppColors.textDark,
+                fontWeight: FontWeight.bold,
+                height: 1.3,
+              ),
+            ),
+            
+            // Summary (if available)
+            if (headline.summary != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                headline.summary!,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textMedium,
+                  height: 1.4,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -354,20 +445,84 @@ class NewsletterHeaderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    // Define the three color variations based on the primary color
+    final Color baseColor = primaryColor;
+    final Color darkerColor = HSLColor.fromColor(baseColor)
+        .withLightness((HSLColor.fromColor(baseColor).lightness - 0.2).clamp(0.0, 1.0))
+        .toColor();
+    final Color lighterColor = HSLColor.fromColor(baseColor)
+        .withLightness((HSLColor.fromColor(baseColor).lightness + 0.15).clamp(0.0, 1.0))
+        .toColor();
+
+    // Calculate dimensions
+    final double primaryWidth = size.width * 0.65; // 65% of the width for primary color
+    final double darkerBorderWidth = 20; // Bold border width
+    final double lighterWidth = size.width - primaryWidth - darkerBorderWidth;
+    
+    // 1. Primary color section (left side with pill-shaped right border)
+    final Path primaryPath = Path();
+    primaryPath.moveTo(0, 0);
+    primaryPath.lineTo(primaryWidth - 30, 0); // Leave space for curve
+    primaryPath.quadraticBezierTo(
+      primaryWidth, 0, 
+      primaryWidth, size.height * 0.5
+    ); // Top curve creating pill shape
+    primaryPath.quadraticBezierTo(
+      primaryWidth, size.height, 
+      primaryWidth - 30, size.height
+    ); // Bottom curve completing pill shape
+    primaryPath.lineTo(0, size.height);
+    primaryPath.close();
+
+    final Paint primaryPaint = Paint()
+      ..color = baseColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(primaryPath, primaryPaint);
+
+    // 2. Darker border section (middle - 20px bold border)
+    final Rect darkerRect = Rect.fromLTWH(
+      primaryWidth - 30, 
+      0, 
+      darkerBorderWidth + 30, 
+      size.height
+    );
+
+    final Paint darkerPaint = Paint()
+      ..color = darkerColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRect(darkerRect, darkerPaint);
+
+    // 3. Lighter color section (right side - remaining space)
+    final Rect lighterRect = Rect.fromLTWH(
+      primaryWidth + darkerBorderWidth - 30, 
+      0, 
+      size.width - (primaryWidth + darkerBorderWidth - 30), 
+      size.height
+    );
+
+    final Paint lighterPaint = Paint()
+      ..color = lighterColor
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRect(lighterRect, lighterPaint);
+
+    // Add subtle gradient overlay for depth and visual interest
+    final Rect gradientRect = Rect.fromLTWH(0, 0, size.width, size.height);
+    final Paint gradientOverlay = Paint()
       ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [primaryColor, secondaryColor],
-      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          Colors.white.withOpacity(0.1),
+          Colors.transparent,
+          Colors.black.withOpacity(0.05),
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ).createShader(gradientRect);
 
-    final path = Path();
-    path.lineTo(0, size.height - 30);
-    path.quadraticBezierTo(size.width / 2, size.height, size.width, size.height - 30);
-    path.lineTo(size.width, 0);
-    path.close();
-
-    canvas.drawPath(path, paint);
+    canvas.drawRect(gradientRect, gradientOverlay);
   }
 
   @override

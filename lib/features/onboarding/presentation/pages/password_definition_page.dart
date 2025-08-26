@@ -13,11 +13,25 @@ class PasswordDefinitionPage extends StatefulWidget {
 
 class _PasswordDefinitionPageState extends State<PasswordDefinitionPage> {
   final TextEditingController _passwordController = TextEditingController();
+  bool _isPasswordValid = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_validatePassword);
+  }
 
   @override
   void dispose() {
+    _passwordController.removeListener(_validatePassword);
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _validatePassword() {
+    setState(() {
+      _isPasswordValid = _passwordController.text.length >= 6;
+    });
   }
 
   @override
@@ -96,11 +110,19 @@ class _PasswordDefinitionPageState extends State<PasswordDefinitionPage> {
                   contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
                 ),
               ),
+              const SizedBox(height: 8.0),
+              Text(
+                'A senha deve ter pelo menos 6 caracteres',
+                style: TextStyle(
+                  fontSize: 12.0,
+                  color: _isPasswordValid ? AppColors.textMedium : Colors.red,
+                ),
+              ),
               const SizedBox(height: 24.0),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: _isPasswordValid ? () {
                     // Save password to controller and advance onboarding
                     final controller = context.read<OnboardingController>();
                     final user = controller.state.user;
@@ -110,7 +132,7 @@ class _PasswordDefinitionPageState extends State<PasswordDefinitionPage> {
                         : User(id: user.id, name: user.name, email: user.email, password: _passwordController.text),
                     );
                     controller.nextStep();
-                  },
+                  } : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,

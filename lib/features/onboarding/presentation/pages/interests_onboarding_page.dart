@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../onboarding_controller.dart';
 
 class InterestsOnboardingPage extends StatefulWidget {
@@ -121,6 +122,8 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              Image.asset(AppAssets.logo, width: 150, height: 150),
+              const SizedBox(width: 5),
               Text(
                 'Olá ${widget.userName},',
                 style: const TextStyle(
@@ -235,36 +238,40 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
                 ],
               ),
               const SizedBox(height: 32.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Save interests to controller and advance onboarding
-                    for (var controller in _otherControllers) {
-                      if (controller.text.isNotEmpty && !_selectedInterests.contains(controller.text)) {
-                        _selectedInterests.add(controller.text);
-                      }
-                    }
-                    context.read<OnboardingController>().setInterests(List<String>.from(_selectedInterests));
-                    context.read<OnboardingController>().nextStep();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _selectedInterests.isNotEmpty ? () {
+                        // Save interests to controller and advance onboarding
+                        for (var controller in _otherControllers) {
+                          if (controller.text.isNotEmpty && !_selectedInterests.contains(controller.text)) {
+                            _selectedInterests.add(controller.text);
+                          }
+                        }
+                        context.read<OnboardingController>().setInterests(List<String>.from(_selectedInterests));
+                        context.read<OnboardingController>().nextStep();
+                      } : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Continue',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                  )
+                ],
               ),
             ],
           ),

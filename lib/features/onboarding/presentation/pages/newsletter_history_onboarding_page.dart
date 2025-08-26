@@ -84,8 +84,8 @@ class _NewsletterHistoryOnboardingPageState extends State<NewsletterHistoryOnboa
             children: [
               Row(
                 children: [
-                  Image.asset(AppAssets.logo, width: 60, height: 60),
-                  const SizedBox(width: 12),
+                  Image.asset(AppAssets.logo, width: 150, height: 150),
+                  const SizedBox(width: 5),
                   const Expanded(
                     child: Text(
                       'Uma ótima frequência para se manter informado!',
