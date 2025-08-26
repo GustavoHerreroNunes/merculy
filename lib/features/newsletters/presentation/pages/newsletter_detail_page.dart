@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../domain/entities/newsletter.dart';
 import '../../domain/entities/news_headline.dart';
+import 'article_detail_page.dart';
 
 class NewsletterDetailPage extends StatelessWidget {
   final Newsletter newsletter;
@@ -103,13 +104,13 @@ class NewsletterDetailPage extends StatelessWidget {
                   // Main News Section
                   if (newsletter.mainNews.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    _buildMainNewsSection(),
+                    _buildMainNewsSection(context),
                     const SizedBox(height: 32),
                   ],
                   
                   // Other News Section
                   if (newsletter.otherNews.isNotEmpty) ...[
-                    _buildOtherNewsSection(),
+                                        _buildOtherNewsSection(context),
                     const SizedBox(height: 32),
                   ],
                   
@@ -141,7 +142,7 @@ class NewsletterDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildMainNewsSection() {
+  Widget _buildMainNewsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,12 +155,12 @@ class NewsletterDetailPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        ...newsletter.mainNews.map((headline) => _buildMainNewsCard(headline)),
+        ...newsletter.mainNews.map((headline) => _buildMainNewsCard(context, headline)),
       ],
     );
   }
 
-  Widget _buildMainNewsCard(NewsHeadline headline) {
+  Widget _buildMainNewsCard(BuildContext context, NewsHeadline headline) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -240,61 +241,81 @@ class NewsletterDetailPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 
-                // Show topics or default message
+                // Show topics as bullet point list or default message
                 if (headline.mainTopics != null && headline.mainTopics!.isNotEmpty) 
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: headline.mainTopics!.map((topic) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: newsletter.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          topic,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: newsletter.primaryColor,
-                            fontWeight: FontWeight.w500,
-                          ),
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              margin: const EdgeInsets.only(top: 6, right: 12),
+                              decoration: BoxDecoration(
+                                color: newsletter.primaryColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                topic,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textDark,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       );
                     }).toList(),
                   )
                 else
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Assunto Geral',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          margin: const EdgeInsets.only(top: 6, right: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.grey,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const Expanded(
+                          child: Text(
+                            'Assunto de interesse geral com informações relevantes',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 
                 const SizedBox(height: 16),
-                InkWell(
-                  onTap: () => _openArticle(headline),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: newsletter.primaryColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
+                Center(
+                  child: GestureDetector(
+                    onTap: () => _openArticle(context, headline),
+                    child: Text(
                       'Detalhes',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        color: newsletter.primaryColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.underline,
+                        decorationColor: newsletter.primaryColor,
                       ),
                     ),
                   ),
@@ -307,44 +328,46 @@ class NewsletterDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildOtherNewsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header with magnifier icon and background
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: newsletter.primaryColor,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.search,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              const Text(
-                'Outras Notícias',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+  Widget _buildOtherNewsSection(BuildContext context) {
+    return Container(
+      width: double.infinity, // 100% width
+      color: Colors.white, // No border radius
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with magnifier icon and background
+          Container(
+            width: double.infinity, // Full width
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            color: newsletter.primaryColor, // No border radius
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.search,
                   color: Colors.white,
+                  size: 20,
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                const Text(
+                  'Outras Notícias',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        ...newsletter.otherNews.map((headline) => _buildOtherNewsCard(headline)),
-      ],
+          const SizedBox(height: 16),
+          ...newsletter.otherNews.map((headline) => _buildOtherNewsCard(context, headline)),
+        ],
+      ),
     );
   }
 
-  Widget _buildOtherNewsCard(NewsHeadline headline) {
+  Widget _buildOtherNewsCard(BuildContext context, NewsHeadline headline) {
     // Get the first source for display
     final source = headline.sources.isNotEmpty ? headline.sources.first : null;
     
@@ -363,7 +386,7 @@ class NewsletterDetailPage extends StatelessWidget {
         ],
       ),
       child: InkWell(
-        onTap: () => _openArticle(headline),
+        onTap: () => _openArticle(context, headline),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -429,8 +452,17 @@ class NewsletterDetailPage extends StatelessWidget {
     // Implement share functionality
   }
 
-  void _openArticle(NewsHeadline headline) {
-    // Implement article opening functionality
+  void _openArticle(BuildContext context, NewsHeadline headline) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ArticleDetailPage(
+          article: headline,
+          newsletterType: newsletter.title,
+          primaryColor: newsletter.primaryColor,
+          secondaryColor: newsletter.secondaryColor,
+        ),
+      ),
+    );
   }
 }
 
@@ -457,20 +489,17 @@ class NewsletterHeaderPainter extends CustomPainter {
     // Calculate dimensions
     final double primaryWidth = size.width * 0.65; // 65% of the width for primary color
     final double darkerBorderWidth = 20; // Bold border width
-    final double lighterWidth = size.width - primaryWidth - darkerBorderWidth;
+    final double pillRadius = size.height / 2; // Radius for perfect pill shape
     
     // 1. Primary color section (left side with pill-shaped right border)
     final Path primaryPath = Path();
     primaryPath.moveTo(0, 0);
-    primaryPath.lineTo(primaryWidth - 30, 0); // Leave space for curve
-    primaryPath.quadraticBezierTo(
-      primaryWidth, 0, 
-      primaryWidth, size.height * 0.5
-    ); // Top curve creating pill shape
-    primaryPath.quadraticBezierTo(
-      primaryWidth, size.height, 
-      primaryWidth - 30, size.height
-    ); // Bottom curve completing pill shape
+    primaryPath.lineTo(primaryWidth - pillRadius, 0);
+    primaryPath.arcToPoint(
+      Offset(primaryWidth - pillRadius, size.height),
+      radius: Radius.circular(pillRadius),
+      clockwise: false,
+    );
     primaryPath.lineTo(0, size.height);
     primaryPath.close();
 

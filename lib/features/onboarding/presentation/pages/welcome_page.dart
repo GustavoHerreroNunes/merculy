@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../onboarding_controller.dart';
-import 'first_access_page.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
