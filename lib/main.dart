@@ -7,11 +7,12 @@ import 'features/onboarding/presentation/pages/password_definition_page.dart';
 import 'features/onboarding/presentation/pages/interests_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/newsletter_format_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/newsletter_frequency_onboarding_page.dart';
-import 'features/onboarding/presentation/pages/newsletter_history_onboarding_page.dart';
+// import 'features/onboarding/presentation/pages/newsletter_history_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/newsletter_channel_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/onboarding_finished_page.dart';
 import 'features/onboarding/presentation/onboarding_controller.dart';
 import 'features/newsletters/presentation/pages/my_newsletters_screen.dart';
+import 'features/onboarding/presentation/pages/welcome_onboarding_page.dart';
 
 void main() {
   runApp(const MerculyApp());
@@ -44,6 +45,8 @@ class OnboardingFlow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final onboardingStep = context.watch<OnboardingController>().state.onboardingStep;
+    final controller = context.read<OnboardingController>();
+    final user = controller.state.user;
     switch (onboardingStep) {
       case 0:
         return const WelcomePage();
@@ -52,13 +55,15 @@ class OnboardingFlow extends StatelessWidget {
       case 2:
         return const PasswordDefinitionPage();
       case 3:
-        return const InterestsOnboardingPage(userName: '');
+        return const WelcomeOnboardingPage();
       case 4:
-        return const NewsletterFormatOnboardingPage();
+        return InterestsOnboardingPage(userName: user?.name ?? '');
       case 5:
-        return const NewsletterFrequencyOnboardingPage();
+        return const NewsletterFormatOnboardingPage();
       case 6:
-        return const NewsletterHistoryOnboardingPage();
+        return const NewsletterFrequencyOnboardingPage();
+      // case 6:
+      //   return const NewsletterHistoryOnboardingPage();
       case 7:
         return const NewsletterChannelOnboardingPage();
       case 8:

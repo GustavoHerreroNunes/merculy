@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/components/bottom_navigation_component.dart';
 import '../../../../core/components/newsletter_card.dart';
+import '../../../settings/presentation/pages/configuration_page.dart';
 import '../../domain/entities/newsletter.dart';
 import '../../domain/entities/news_headline.dart';
 import '../../domain/entities/source.dart';
@@ -87,7 +88,7 @@ A expectativa é que o Brasil se torne um dos principais exportadores de hidrog�
           'Mais de 500 mil empregos verdes serão criados nos próximos 5 anos'
         ],
         isMainNews: true,
-        isPolarized: false,
+        isPolarized: true,
         biasInsights: {'Centro': 1, 'Esquerda': 3, 'Direita': 3},
         sources: [
           Source(websiteRoot: 'g1.com.br', fantasyName: 'G1', articleLink: 'https://g1.com.br/sample'),
@@ -111,7 +112,7 @@ A expectativa é que o Brasil se torne um dos principais exportadores de hidrog�
               quote: '"Alguns especialistas criticam os editais e favorecem megacorporações. É preciso incluir cooperativas de energia e garantir que comunidades locais tenham acesso..."'
             ),
           ],
-          'Direita': [],
+          'Direita': [], // Empty to demonstrate placeholder
         },
         publishedAt: DateTime.now(),
       ),
@@ -332,7 +333,7 @@ Os pesquisadores estimam que computadores quânticos baseados nesta tecnologia p
           setState(() {
             _currentPage = page;
           });
-          // Handle navigation to other pages here
+          _handleNavigation(page);
         },
       ),
     );
@@ -344,5 +345,32 @@ Os pesquisadores estimam que computadores quânticos baseados nesta tecnologia p
         builder: (context) => NewsletterDetailPage(newsletter: newsletter),
       ),
     );
+  }
+
+  void _handleNavigation(BottomNavPage page) {
+    switch (page) {
+      case BottomNavPage.newsletters:
+        // Already on newsletters page, do nothing
+        break;
+      case BottomNavPage.saved:
+        // TODO: Navigate to saved articles page
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Página de salvos em desenvolvimento')),
+        );
+        break;
+      case BottomNavPage.channels:
+        // TODO: Navigate to channels page
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Página de canais em desenvolvimento')),
+        );
+        break;
+      case BottomNavPage.settings:
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ConfigurationPage(),
+          ),
+        );
+        break;
+    }
   }
 }

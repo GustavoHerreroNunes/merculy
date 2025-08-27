@@ -460,6 +460,7 @@ class NewsletterDetailPage extends StatelessWidget {
           newsletterType: newsletter.title,
           primaryColor: newsletter.primaryColor,
           secondaryColor: newsletter.secondaryColor,
+          newsletterIcon: newsletter.icon,
         ),
       ),
     );

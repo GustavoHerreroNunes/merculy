@@ -9,6 +9,7 @@ class ArticleDetailPage extends StatelessWidget {
   final String newsletterType;
   final Color primaryColor;
   final Color secondaryColor;
+  final IconData newsletterIcon;
 
   const ArticleDetailPage({
     super.key,
@@ -16,6 +17,7 @@ class ArticleDetailPage extends StatelessWidget {
     required this.newsletterType,
     required this.primaryColor,
     required this.secondaryColor,
+    required this.newsletterIcon,
   });
 
   @override
@@ -93,12 +95,13 @@ class ArticleDetailPage extends StatelessWidget {
                   
                   const SizedBox(height: 30),
                   
-                  // Bias Insights Chart
-                  _buildBiasInsights(),
+                  // Conditionally show Bias Insights Chart (only for polarized news)
+                  if (article.isPolarized == true) ...[
+                    _buildBiasInsights(),
+                    const SizedBox(height: 30),
+                  ],
                   
-                  const SizedBox(height: 30),
-                  
-                  // Source Lists by Political Bias
+                  // Source Lists
                   _buildSourcesByBias(),
                 ],
               ),
@@ -112,20 +115,31 @@ class ArticleDetailPage extends StatelessWidget {
   Widget _buildTags() {
     return Row(
       children: [
-        // Newsletter Type Tag
+        // Newsletter Type Tag with Icon
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             border: Border.all(color: primaryColor),
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Text(
-            newsletterType.toUpperCase(),
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: primaryColor,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                newsletterIcon,
+                size: 14,
+                color: primaryColor,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                newsletterType.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: primaryColor,
+                ),
+              ),
+            ],
           ),
         ),
         
@@ -325,9 +339,43 @@ class ArticleDetailPage extends StatelessWidget {
       'Direita': [],
     };
 
+    // Count total sources
+    final allSources = sourcesByBias.values.expand((sources) => sources).toList();
+    final totalSources = allSources.length;
+
+    if (article.isPolarized != true) {
+      // Non-polarized news: show all sources together without subsection titles
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Fontes ($totalSources)',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...allSources.map((source) => _buildSourceCard(source, primaryColor)),
+        ],
+      );
+    }
+
+    // Polarized news: show sections by political bias
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(
+          'Fontes ($totalSources)',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+          ),
+        ),
+        const SizedBox(height: 20),
+        
         _buildSourceSection('Matérias ao Centro', sourcesByBias['Centro']!, primaryColor),
         const SizedBox(height: 24),
         _buildSourceSection('Matérias à Esquerda', sourcesByBias['Esquerda']!, 
@@ -358,8 +406,87 @@ class ArticleDetailPage extends StatelessWidget {
         
         const SizedBox(height: 12),
         
-        ...sources.map((source) => _buildSourceCard(source, accentColor)),
+        if (sources.isNotEmpty)
+          ...sources.map((source) => _buildSourceCard(source, accentColor))
+        else
+          _buildSourcePlaceholder(accentColor),
       ],
+    );
+  }
+
+  Widget _buildSourcePlaceholder(Color accentColor) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: accentColor.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: accentColor.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Placeholder Icon
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.remove_red_eye_outlined,
+              color: accentColor,
+              size: 20,
+            ),
+          ),
+          
+          const SizedBox(width: 12),
+          
+          // Placeholder Content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Possível Blind Spot',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: accentColor.withOpacity(0.8),
+                  ),
+                ),
+                
+                const SizedBox(height: 8),
+                
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      left: BorderSide(
+                        color: accentColor.withOpacity(0.3),
+                        width: 4,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'Não há fontes disponíveis para este espectro político no momento.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: accentColor.withOpacity(0.7),
+                      fontStyle: FontStyle.italic,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

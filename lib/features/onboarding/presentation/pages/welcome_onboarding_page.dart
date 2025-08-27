@@ -74,7 +74,7 @@ class _WelcomeOnboardingPageState extends State<WelcomeOnboardingPage> {
               TextField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  labelText: 'Maria',
+                  labelText: 'Aurora',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
                     borderSide: BorderSide.none,
