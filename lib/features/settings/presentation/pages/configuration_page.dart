@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/components/bottom_navigation_component.dart';
+import '../../../../core/navigation/navigation_controller.dart';
 import '../../../onboarding/presentation/onboarding_controller.dart';
 import '../../../onboarding/presentation/components/interests_selector_component.dart';
 import '../../../onboarding/presentation/components/weekday_selector_component.dart';
@@ -16,7 +17,6 @@ class ConfigurationPage extends StatefulWidget {
 
 class _ConfigurationPageState extends State<ConfigurationPage> {
   bool _isEditingAccount = false;
-  BottomNavPage _currentPage = BottomNavPage.settings;
   
   // Controllers for account information
   final TextEditingController _nameController = TextEditingController();
@@ -80,11 +80,8 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
             ),
           ),
           bottomNavigationBar: BottomNavigationComponent(
-            currentPage: _currentPage,
+            forcePage: BottomNavPage.settings, // Explicitly set as settings page
             onPageChanged: (page) {
-              setState(() {
-                _currentPage = page;
-              });
               _handleNavigation(page);
             },
           ),

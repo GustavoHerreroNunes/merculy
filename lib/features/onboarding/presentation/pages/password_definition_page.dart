@@ -13,24 +13,35 @@ class PasswordDefinitionPage extends StatefulWidget {
 
 class _PasswordDefinitionPageState extends State<PasswordDefinitionPage> {
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   bool _isPasswordValid = false;
+  bool _isNameValid = false;
 
   @override
   void initState() {
     super.initState();
     _passwordController.addListener(_validatePassword);
+    _nameController.addListener(_validateName);
   }
 
   @override
   void dispose() {
     _passwordController.removeListener(_validatePassword);
     _passwordController.dispose();
+    _nameController.removeListener(_validateName);
+    _nameController.dispose();
     super.dispose();
   }
 
   void _validatePassword() {
     setState(() {
       _isPasswordValid = _passwordController.text.length >= 6;
+    });
+  }
+
+  void _validateName() {
+    setState(() {
+      _isNameValid = _nameController.text.trim().isNotEmpty;
     });
   }
 
@@ -96,6 +107,22 @@ class _PasswordDefinitionPageState extends State<PasswordDefinitionPage> {
               ),
               const SizedBox(height: 32.0),
               TextField(
+                controller: _nameController,
+                keyboardType: TextInputType.name,
+                decoration: InputDecoration(
+                  labelText: 'Nome Completo',
+                  hintText: 'Seu nome',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              TextField(
                 controller: _passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
@@ -122,14 +149,14 @@ class _PasswordDefinitionPageState extends State<PasswordDefinitionPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isPasswordValid ? () {
-                    // Save password to controller and advance onboarding
+                  onPressed: (_isPasswordValid && _isNameValid) ? () {
+                    // Save password and name to controller and advance onboarding
                     final controller = context.read<OnboardingController>();
                     final user = controller.state.user;
                     controller.setUser(
                       user == null
-                        ? User(id: '', name: '', email: '', password: _passwordController.text)
-                        : User(id: user.id, name: user.name, email: user.email, password: _passwordController.text),
+                        ? User(id: '', name: _nameController.text, email: '', password: _passwordController.text)
+                        : User(id: user.id, name: _nameController.text, email: user.email, password: _passwordController.text),
                     );
                     controller.nextStep();
                   } : null,

@@ -1,22 +1,50 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/color_palette.dart';
-
-enum BottomNavPage {
-  newsletters,
-  saved,
-  channels,
-  settings,
-}
+import '../navigation/navigation_controller.dart';
 
 class BottomNavigationComponent extends StatelessWidget {
-  final BottomNavPage currentPage;
   final Function(BottomNavPage) onPageChanged;
+  final BottomNavPage? forcePage; // Add optional explicit page
 
   const BottomNavigationComponent({
     super.key,
-    required this.currentPage,
     required this.onPageChanged,
+    this.forcePage,
   });
+
+  BottomNavPage _getCurrentPageFromContext(BuildContext context) {
+    // Get the widget tree to determine current page
+    final widget = context.widget;
+    final widgetType = widget.runtimeType.toString();
+    
+    // Check if we're in a configuration-related context
+    if (widgetType.contains('Configuration') || 
+        widgetType.contains('Settings')) {
+      return BottomNavPage.settings;
+    }
+    
+    // Check route settings
+    final route = ModalRoute.of(context);
+    final routeName = route?.settings.name ?? '';
+    
+    if (routeName.contains('configuration') || 
+        routeName.contains('settings')) {
+      return BottomNavPage.settings;
+    }
+    
+    // Check if parent context has configuration page
+    try {
+      final parentContext = context.findAncestorStateOfType<State>();
+      if (parentContext?.widget.runtimeType.toString().contains('Configuration') == true) {
+        return BottomNavPage.settings;
+      }
+    } catch (e) {
+      // Ignore error
+    }
+    
+    // Default to newsletters
+    return BottomNavPage.newsletters;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +72,7 @@ class BottomNavigationComponent extends StatelessWidget {
           fontWeight: FontWeight.normal,
           fontSize: 12,
         ),
-        currentIndex: _getCurrentIndex(),
+        currentIndex: _getCurrentIndex(context),
         onTap: (index) => _handleTap(index),
         items: const [
           BottomNavigationBarItem(
@@ -72,7 +100,9 @@ class BottomNavigationComponent extends StatelessWidget {
     );
   }
 
-  int _getCurrentIndex() {
+  int _getCurrentIndex(BuildContext context) {
+    // Use explicit page if provided, otherwise detect from context
+    final currentPage = forcePage ?? _getCurrentPageFromContext(context);
     switch (currentPage) {
       case BottomNavPage.newsletters:
         return 0;

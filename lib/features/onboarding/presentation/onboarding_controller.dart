@@ -83,6 +83,11 @@ class OnboardingController extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setFlow(OnboardingFlowType flow) {
+    state.currentFlow = flow;
+    notifyListeners();
+  }
+
   void nextStep() {
     state.onboardingStep++;
     notifyListeners();

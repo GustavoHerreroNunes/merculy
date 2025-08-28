@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/constants/color_palette.dart';
 import 'features/onboarding/presentation/pages/welcome_page.dart';
+import 'features/onboarding/presentation/pages/login_email_page.dart';
+import 'features/onboarding/presentation/pages/login_password_page.dart';
 import 'features/onboarding/presentation/pages/first_access_page.dart';
 import 'features/onboarding/presentation/pages/password_definition_page.dart';
 import 'features/onboarding/presentation/pages/interests_onboarding_page.dart';
@@ -11,8 +13,8 @@ import 'features/onboarding/presentation/pages/newsletter_frequency_onboarding_p
 import 'features/onboarding/presentation/pages/newsletter_channel_onboarding_page.dart';
 import 'features/onboarding/presentation/pages/onboarding_finished_page.dart';
 import 'features/onboarding/presentation/onboarding_controller.dart';
+import 'features/onboarding/presentation/onboarding_state.dart';
 import 'features/newsletters/presentation/pages/my_newsletters_screen.dart';
-import 'features/onboarding/presentation/pages/welcome_onboarding_page.dart';
 
 void main() {
   runApp(const MerculyApp());
@@ -44,20 +46,37 @@ class OnboardingFlow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final onboardingStep = context.watch<OnboardingController>().state.onboardingStep;
-    final controller = context.read<OnboardingController>();
+    final controller = context.watch<OnboardingController>();
+    final onboardingStep = controller.state.onboardingStep;
+    final currentFlow = controller.state.currentFlow;
     final user = controller.state.user;
+    
     switch (onboardingStep) {
       case 0:
         return const WelcomePage();
       case 1:
-        return const FirstAccessPage();
+        // Different paths based on flow
+        if (currentFlow == OnboardingFlowType.login) {
+          return const LoginEmailPage();
+        } else {
+          return const FirstAccessPage();
+        }
       case 2:
-        return const PasswordDefinitionPage();
+        // Different paths based on flow  
+        if (currentFlow == OnboardingFlowType.login) {
+          return const LoginPasswordPage();
+        } else {
+          return const PasswordDefinitionPage();
+        }
       case 3:
-        return const WelcomeOnboardingPage();
+        // Only registration flow continues to interests
+        if (currentFlow == OnboardingFlowType.registration) {
+          return InterestsOnboardingPage(userName: user?.name ?? '');
+        } else {
+          // Login flow should not reach here, but fallback to newsletters
+          return const MyNewslettersScreen();
+        }
       case 4:
-        return InterestsOnboardingPage(userName: user?.name ?? '');
       case 5:
         return const NewsletterFormatOnboardingPage();
       case 6:

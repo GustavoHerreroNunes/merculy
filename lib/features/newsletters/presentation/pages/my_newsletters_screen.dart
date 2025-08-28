@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/components/bottom_navigation_component.dart';
+import '../../../../core/navigation/navigation_controller.dart';
 import '../../../../core/components/newsletter_card.dart';
 import '../../../settings/presentation/pages/configuration_page.dart';
 import '../../domain/entities/newsletter.dart';
@@ -16,8 +17,6 @@ class MyNewslettersScreen extends StatefulWidget {
 }
 
 class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
-  BottomNavPage _currentPage = BottomNavPage.newsletters;
-
   // Mock data - replace with actual data source
   List<Newsletter> get _newsletters {
     return [
@@ -328,11 +327,8 @@ Os pesquisadores estimam que computadores quânticos baseados nesta tecnologia p
       
       // Bottom Navigation
       bottomNavigationBar: BottomNavigationComponent(
-        currentPage: _currentPage,
+        forcePage: BottomNavPage.newsletters, // Explicitly set as newsletters page
         onPageChanged: (page) {
-          setState(() {
-            _currentPage = page;
-          });
           _handleNavigation(page);
         },
       ),
@@ -368,6 +364,7 @@ Os pesquisadores estimam que computadores quânticos baseados nesta tecnologia p
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => const ConfigurationPage(),
+            settings: const RouteSettings(name: '/configuration'),
           ),
         );
         break;

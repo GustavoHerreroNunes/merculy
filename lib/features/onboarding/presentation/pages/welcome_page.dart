@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../onboarding_controller.dart';
+import '../onboarding_state.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -41,8 +42,10 @@ class WelcomePage extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Advance onboarding step
-                    context.read<OnboardingController>().nextStep();
+                    // Set login flow and advance onboarding step
+                    final controller = context.read<OnboardingController>();
+                    controller.setFlow(OnboardingFlowType.login);
+                    controller.nextStep();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -67,8 +70,10 @@ class WelcomePage extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    // Advance onboarding step
-                    context.read<OnboardingController>().nextStep();
+                    // Set registration flow and advance onboarding step
+                    final controller = context.read<OnboardingController>();
+                    controller.setFlow(OnboardingFlowType.registration);
+                    controller.nextStep();
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.primary,
