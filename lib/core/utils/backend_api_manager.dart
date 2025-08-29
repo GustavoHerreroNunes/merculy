@@ -65,4 +65,60 @@ class BackendApiManager {
       throw Exception('Error during login: $e');
     }
   }
+
+  static Future<Map<String, dynamic>> googleLogin(String googleToken) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/auth/google-login');
+      final headers = baseHeaders;
+      
+      final body = json.encode({
+        'token': googleToken,
+      });
+
+      print('[step 2.1]');
+
+      final response = await http.post(url, headers: headers, body: body);
+      
+      if (response.statusCode == 200) {
+        print('[step 2.2]');
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        print('[step 2.3]');
+        throw Exception('Failed to login with Google: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error during Google login: $e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> updateProfile({
+    required String userId,
+    required List<String> interests,
+    required List<String> deliveryDays,
+    required String format,
+    required String deliveryTime,
+  }) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/update-profile');
+      final headers = baseHeaders;
+      
+      final body = json.encode({
+        'user_id': userId,
+        'interests': interests,
+        'delivery_days': deliveryDays,
+        'format': format,
+        'delivery_time': deliveryTime,
+      });
+
+      final response = await http.put(url, headers: headers, body: body);
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to update profile: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error during profile update: $e');
+    }
+  }
 }

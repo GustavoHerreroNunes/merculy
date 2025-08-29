@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/constants/color_palette.dart';
+import 'core/services/google_sign_in_service.dart';
 import 'features/onboarding/presentation/pages/welcome_page.dart';
 import 'features/onboarding/presentation/pages/login_email_page.dart';
 import 'features/onboarding/presentation/pages/login_password_page.dart';
@@ -16,7 +18,17 @@ import 'features/onboarding/presentation/onboarding_controller.dart';
 import 'features/onboarding/presentation/onboarding_state.dart';
 import 'features/newsletters/presentation/pages/my_newsletters_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+  
+  // Initialize Google Sign-In
+  try {
+    await GoogleSignInService.initializeGoogleSignIn();
+  } catch (e) {
+    print('Failed to initialize Google Sign-In: $e');
+  }
+  
   runApp(const MerculyApp());
 }
 

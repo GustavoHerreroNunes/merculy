@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
+import '../../../../core/services/google_sign_in_service.dart';
+import '../../../../core/utils/backend_api_manager.dart';
 import '../onboarding_controller.dart';
 import '../../domain/entities/user.dart';
+import 'interests_onboarding_page.dart';
+import '../../../newsletters/presentation/pages/my_newsletters_screen.dart';
 
 class LoginEmailPage extends StatefulWidget {
   const LoginEmailPage({super.key});
@@ -14,6 +18,7 @@ class LoginEmailPage extends StatefulWidget {
 class _LoginEmailPageState extends State<LoginEmailPage> {
   final TextEditingController _emailController = TextEditingController();
   bool _isEmailValid = false;
+  bool _isGoogleSignInLoading = false;
 
   @override
   void initState() {
@@ -32,6 +37,83 @@ class _LoginEmailPageState extends State<LoginEmailPage> {
     setState(() {
       _isEmailValid = isValid;
     });
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isGoogleSignInLoading = true;
+    });
+
+    try {
+      final account = await GoogleSignInService.signInWithGoogle();
+      
+      if (account != null) {
+        // Get authentication details
+        final googleAuth = await account.authentication;
+        
+        if (googleAuth.idToken != null) {
+          // Send token to backend
+          final response = await BackendApiManager.googleLogin(googleAuth.idToken!);
+          
+          // Update user in onboarding controller
+          final controller = context.read<OnboardingController>();
+          final user = User.fromJson(response['user']);
+          controller.setUser(user);
+          
+          if (mounted) {
+            // Check if user needs onboarding (new user or incomplete profile)
+            if (user.interests.isEmpty) {
+              // New user - needs to complete onboarding
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => InterestsOnboardingPage(userName: user.name),
+                ),
+              );
+            } else {
+              // Existing user with complete profile - go to main app
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const MyNewslettersScreen(),
+                ),
+              );
+            }
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Erro ao obter token do Google'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Login com Google cancelado'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleSignInLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -138,17 +220,24 @@ class _LoginEmailPageState extends State<LoginEmailPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Implement Google login
-                  },
-                  icon: Image.network(
-                    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png',
-                    height: 24.0,
-                    width: 24.0,
-                    color: Colors.red,
-                  ),
-                  label: const Text(
-                    'Continue com Google',
+                  onPressed: _isGoogleSignInLoading ? null : _handleGoogleSignIn,
+                  icon: _isGoogleSignInLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(AppColors.textDark),
+                          ),
+                        )
+                      : Image.network(
+                          'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png',
+                          height: 24.0,
+                          width: 24.0,
+                          color: Colors.red,
+                        ),
+                  label: Text(
+                    _isGoogleSignInLoading ? 'Entrando...' : 'Continue com Google',
                     style: TextStyle(
                       fontSize: 18.0,
                       fontWeight: FontWeight.bold,

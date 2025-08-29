@@ -92,6 +92,7 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
         _selectedInterests.add(interest);
       }
     });
+    print('Selected interests: $_selectedInterests'); // Debug print
   }
 
   @override
@@ -222,12 +223,16 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
                         onTap: () {},
                         onChanged: (text) {
                           setState(() {
+                            // Remove the old text from interests if it was there
+                            _selectedInterests.removeWhere((interest) => 
+                                _otherControllers.any((ctrl) => ctrl.text.isEmpty && interest == ctrl.text));
+                            
+                            // Add the new text if it's not empty and not already selected
                             if (text.isNotEmpty && !_selectedInterests.contains(text)) {
                               _selectedInterests.add(text);
-                            } else if (text.isEmpty && _selectedInterests.contains(text)) {
-                              _selectedInterests.remove(text);
                             }
                           });
+                          print('TextField changed: "$text", Selected interests: $_selectedInterests'); // Debug
                         },
                         onEditingComplete: () {
                           focusNode.unfocus();
@@ -244,14 +249,16 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _selectedInterests.isNotEmpty ? () {
+                        print('Continue button clicked! Selected interests: $_selectedInterests'); // Debug
                         // Save interests to controller and advance onboarding
                         for (var controller in _otherControllers) {
                           if (controller.text.isNotEmpty && !_selectedInterests.contains(controller.text)) {
                             _selectedInterests.add(controller.text);
                           }
                         }
+                        print('Final interests being saved: $_selectedInterests'); // Debug
                         context.read<OnboardingController>().setInterests(List<String>.from(_selectedInterests));
-                        context.read<OnboardingController>().nextStep();
+                        context.read<OnboardingController>().nextStep(); // This should trigger automatic navigation
                       } : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

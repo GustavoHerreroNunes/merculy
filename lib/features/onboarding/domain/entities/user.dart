@@ -4,6 +4,7 @@ class User {
   final String email;
   final String password;
   final String? token; // JWT token from backend
+  final List<String> interests; // User interests
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -13,6 +14,7 @@ class User {
     required this.email,
     required this.password,
     this.token,
+    this.interests = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -25,6 +27,7 @@ class User {
       email: json['email'] ?? '',
       password: '', // Don't store password from response
       token: json['token'],
+      interests: json['interests'] != null ? List<String>.from(json['interests']) : [],
       createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
       updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt']) : null,
     );
@@ -36,6 +39,7 @@ class User {
       'id': id,
       'name': name,
       'email': email,
+      'interests': interests,
       // Note: password should not be included in toJson for security
     };
   }
@@ -47,6 +51,7 @@ class User {
     String? email,
     String? password,
     String? token,
+    List<String>? interests,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -56,6 +61,7 @@ class User {
       email: email ?? this.email,
       password: password ?? this.password,
       token: token ?? this.token,
+      interests: interests ?? this.interests,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

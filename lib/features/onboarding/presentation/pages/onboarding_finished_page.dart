@@ -37,25 +37,51 @@ class _OnboardingFinishedPageState extends State<OnboardingFinishedPage> {
         throw Exception('User data not found');
       }
 
-      final response = await _apiManager.registerUser(
-        email: user.email,
-        name: user.name,
-        password: user.password,
-        interests: preferences.interests,
-        newsletterFormat: OnboardingHelper.convertNewsletterFormatToApi(preferences.newsletterFormat),
-        deliveryDays: OnboardingHelper.convertDayNumbersToNames(preferences.frequencyDays),
-        deliveryTime: preferences.frequencyTime,
-      );
+      Map<String, dynamic>? response;
+
+      // Check if user has an ID (came from Google login)
+      if (user.id.isNotEmpty) {
+        // User came from Google login, update profile
+        response = await BackendApiManager.updateProfile(
+          userId: user.id,
+          interests: preferences.interests,
+          deliveryDays: OnboardingHelper.convertDayNumbersToNames(preferences.frequencyDays),
+          format: OnboardingHelper.convertNewsletterFormatToApi(preferences.newsletterFormat),
+          deliveryTime: preferences.frequencyTime,
+        );
+      } else {
+        // Regular registration (email/password flow)
+        response = await _apiManager.registerUser(
+          email: user.email,
+          name: user.name,
+          password: user.password,
+          interests: preferences.interests,
+          newsletterFormat: OnboardingHelper.convertNewsletterFormatToApi(preferences.newsletterFormat),
+          deliveryDays: OnboardingHelper.convertDayNumbersToNames(preferences.frequencyDays),
+          deliveryTime: preferences.frequencyTime,
+        );
+      }
 
       if (response != null) {
         // Update user with server response (including ID and token)
-        final updatedUser = User.fromJson(response);
-        controller.setUser(updatedUser.copyWith(
-          email: user.email,
-          name: user.name,
-        ));
+        User updatedUser;
+        if (user.id.isNotEmpty) {
+          // For Google login users, preserve existing user data with updated preferences
+          updatedUser = user.copyWith(
+            interests: preferences.interests,
+          );
+        } else {
+          // For regular registration, use server response
+          updatedUser = User.fromJson(response);
+          updatedUser = updatedUser.copyWith(
+            email: user.email,
+            name: user.name,
+          );
+        }
+        
+        controller.setUser(updatedUser);
 
-        // Registration successful, proceed to main app
+        // Registration/update successful, proceed to main app
         widget.onFinalize();
       }
     } catch (e) {
