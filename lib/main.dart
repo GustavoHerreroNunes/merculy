@@ -89,17 +89,17 @@ class OnboardingFlow extends StatelessWidget {
           return const MyNewslettersScreen();
         }
       case 4:
-      case 5:
         return const NewsletterFormatOnboardingPage();
-      case 6:
+      case 5:
         return const NewsletterFrequencyOnboardingPage();
-      // case 6:
-      //   return const NewsletterHistoryOnboardingPage();
-      case 7:
+      case 6:
         return const NewsletterChannelOnboardingPage();
-      case 8:
+      case 7:
         return OnboardingFinishedPage(
           onFinalize: () {
+            // Use controller to advance to the final screen or handle completion
+            // This assumes there's a final step or a way to signal completion to the controller
+            // For now, we'll keep the direct navigation as a fallback if no such controller method exists
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (context) => const MyNewslettersScreen(),
@@ -107,6 +107,9 @@ class OnboardingFlow extends StatelessWidget {
             );
           },
         );
+      case 8:
+        return const MyNewslettersScreen(); // Assuming this is the final destination after onboarding
+
       default:
         return const WelcomePage();
     }
