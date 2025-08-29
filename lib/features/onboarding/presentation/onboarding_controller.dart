@@ -4,98 +4,117 @@ import '../domain/entities/user_preferences.dart';
 import 'onboarding_state.dart';
 
 class OnboardingController extends ChangeNotifier {
-  OnboardingState state;
+  User? _user;
+  UserPreferences _preferences;
+  int _onboardingStep;
+  OnboardingFlowType _currentFlow;
 
   OnboardingController()
-      : state = OnboardingState(
-          preferences: UserPreferences(
-            interests: [],
-            newsletterFormat: 1,
-            frequencyDays: [1],
-            frequencyTime: '07:45',
-            followedChannels: [],
-            followedStories: [],
-          ),
-        );
+      : _preferences = UserPreferences(
+          interests: [],
+          newsletterFormat: 1,
+          frequencyDays: [1],
+          frequencyTime: '07:45',
+          followedChannels: [],
+          followedStories: [],
+        ),
+        _onboardingStep = 0,
+        _currentFlow = OnboardingFlowType.login;
+
+  // Getters
+  User? get user => _user;
+  UserPreferences get preferences => _preferences;
+  int get onboardingStep => _onboardingStep;
+  OnboardingFlowType get currentFlow => _currentFlow;
+
+  // For backward compatibility, provide the state object
+  OnboardingState get state => OnboardingState(
+    user: _user,
+    preferences: _preferences,
+    onboardingStep: _onboardingStep,
+    currentFlow: _currentFlow,
+  );
 
   void setUser(User user) {
-    state.user = user;
+    _user = user;
     notifyListeners();
   }
 
   void setInterests(List<String> interests) {
-    state.preferences = UserPreferences(
+    _preferences = UserPreferences(
       interests: interests,
-      newsletterFormat: state.preferences.newsletterFormat,
-      frequencyDays: state.preferences.frequencyDays,
-      frequencyTime: state.preferences.frequencyTime,
-      followedChannels: state.preferences.followedChannels,
-      followedStories: state.preferences.followedStories,
+      newsletterFormat: _preferences.newsletterFormat,
+      frequencyDays: _preferences.frequencyDays,
+      frequencyTime: _preferences.frequencyTime,
+      followedChannels: _preferences.followedChannels,
+      followedStories: _preferences.followedStories,
     );
     notifyListeners();
   }
 
   void setNewsletterFormat(int format) {
-    state.preferences = UserPreferences(
-      interests: state.preferences.interests,
+    _preferences = UserPreferences(
+      interests: _preferences.interests,
       newsletterFormat: format,
-      frequencyDays: state.preferences.frequencyDays,
-      frequencyTime: state.preferences.frequencyTime,
-      followedChannels: state.preferences.followedChannels,
-      followedStories: state.preferences.followedStories,
+      frequencyDays: _preferences.frequencyDays,
+      frequencyTime: _preferences.frequencyTime,
+      followedChannels: _preferences.followedChannels,
+      followedStories: _preferences.followedStories,
     );
     notifyListeners();
   }
 
   void setFrequency(List<int> days, String time) {
-    state.preferences = UserPreferences(
-      interests: state.preferences.interests,
-      newsletterFormat: state.preferences.newsletterFormat,
+    _preferences = UserPreferences(
+      interests: _preferences.interests,
+      newsletterFormat: _preferences.newsletterFormat,
       frequencyDays: days,
       frequencyTime: time,
-      followedChannels: state.preferences.followedChannels,
-      followedStories: state.preferences.followedStories,
+      followedChannels: _preferences.followedChannels,
+      followedStories: _preferences.followedStories,
     );
     notifyListeners();
   }
 
   void setFollowedChannels(List<String> channels) {
-    state.preferences = UserPreferences(
-      interests: state.preferences.interests,
-      newsletterFormat: state.preferences.newsletterFormat,
-      frequencyDays: state.preferences.frequencyDays,
-      frequencyTime: state.preferences.frequencyTime,
+    _preferences = UserPreferences(
+      interests: _preferences.interests,
+      newsletterFormat: _preferences.newsletterFormat,
+      frequencyDays: _preferences.frequencyDays,
+      frequencyTime: _preferences.frequencyTime,
       followedChannels: channels,
-      followedStories: state.preferences.followedStories,
+      followedStories: _preferences.followedStories,
     );
     notifyListeners();
   }
 
   void setFollowedStories(List<String> stories) {
-    state.preferences = UserPreferences(
-      interests: state.preferences.interests,
-      newsletterFormat: state.preferences.newsletterFormat,
-      frequencyDays: state.preferences.frequencyDays,
-      frequencyTime: state.preferences.frequencyTime,
-      followedChannels: state.preferences.followedChannels,
+    _preferences = UserPreferences(
+      interests: _preferences.interests,
+      newsletterFormat: _preferences.newsletterFormat,
+      frequencyDays: _preferences.frequencyDays,
+      frequencyTime: _preferences.frequencyTime,
+      followedChannels: _preferences.followedChannels,
       followedStories: stories,
     );
     notifyListeners();
   }
 
   void setFlow(OnboardingFlowType flow) {
-    state.currentFlow = flow;
+    _currentFlow = flow;
     notifyListeners();
   }
 
   void nextStep() {
-    state.onboardingStep++;
+    print('OnboardingController.nextStep: $_onboardingStep -> ${_onboardingStep + 1}'); // Debug
+    _onboardingStep++;
     notifyListeners();
+    print('OnboardingController.nextStep: notifyListeners() called'); // Debug
   }
 
   void previousStep() {
-    if (state.onboardingStep > 0) {
-      state.onboardingStep--;
+    if (_onboardingStep > 0) {
+      _onboardingStep--;
       notifyListeners();
     }
   }

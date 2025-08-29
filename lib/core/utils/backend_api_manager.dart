@@ -99,7 +99,7 @@ class BackendApiManager {
     required String deliveryTime,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl/api/update-profile');
+      final url = Uri.parse('$baseUrl/api/auth/update-profile');
       final headers = baseHeaders;
       
       final body = json.encode({

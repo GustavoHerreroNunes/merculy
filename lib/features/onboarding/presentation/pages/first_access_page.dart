@@ -4,6 +4,7 @@ import '../../../../core/constants/color_palette.dart';
 import '../../../../core/services/google_sign_in_service.dart';
 import '../../../../core/utils/backend_api_manager.dart';
 import '../onboarding_controller.dart';
+import '../onboarding_state.dart';
 import '../../domain/entities/user.dart';
 import 'interests_onboarding_page.dart';
 import '../../../newsletters/presentation/pages/my_newsletters_screen.dart';
@@ -61,17 +62,23 @@ class _FirstAccessPageState extends State<FirstAccessPage> {
           final controller = context.read<OnboardingController>();
           final user = User.fromJson(response['user']);
           controller.setUser(user);
+          print(response['user']);
           print('[step 3] User: ${user.name}, hasInterests: ${user.interests.isNotEmpty}');
           
           if (mounted) {
             // Check if user needs onboarding (new user or incomplete profile)
             if (user.interests.isEmpty) {
               // New user - needs to complete onboarding
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => InterestsOnboardingPage(userName: user.name),
-                ),
-              );
+              // Set the controller to registration flow and advance to interests step
+              print('[Google Sign-in] Current step: ${controller.onboardingStep}');
+              controller.setFlow(OnboardingFlowType.registration);
+              print('[Google Sign-in] Set flow to registration');
+              
+              // We are currently at step 1 (FirstAccessPage), need to go to step 3 (InterestsOnboardingPage)
+              controller.nextStep(); // step 1 -> 2 (PasswordDefinitionPage)
+              print('[Google Sign-in] Advanced to step: ${controller.onboardingStep}');
+              controller.nextStep(); // step 2 -> 3 (InterestsOnboardingPage)  
+              print('[Google Sign-in] Advanced to step: ${controller.onboardingStep}');
             } else {
               // Existing user with complete profile - go to main app
               Navigator.of(context).pushReplacement(
