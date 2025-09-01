@@ -17,10 +17,14 @@ import 'features/onboarding/presentation/pages/onboarding_finished_page.dart';
 import 'features/onboarding/presentation/onboarding_controller.dart';
 import 'features/onboarding/presentation/onboarding_state.dart';
 import 'features/newsletters/presentation/pages/my_newsletters_screen.dart';
+import 'core/services/token_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  
+  // Initialize TokenManager
+  await TokenManager.initialize();
   
   // Initialize Google Sign-In
   try {

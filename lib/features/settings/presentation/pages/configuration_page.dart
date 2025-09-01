@@ -3,10 +3,12 @@ import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/components/bottom_navigation_component.dart';
 import '../../../../core/navigation/navigation_controller.dart';
+import '../../../../core/utils/backend_api_manager.dart';
 import '../../../onboarding/presentation/onboarding_controller.dart';
 import '../../../onboarding/presentation/components/interests_selector_component.dart';
 import '../../../onboarding/presentation/components/weekday_selector_component.dart';
 import '../../../onboarding/presentation/components/time_selector_component.dart';
+import '../../../onboarding/presentation/helpers/onboarding_helper.dart';
 
 class ConfigurationPage extends StatefulWidget {
   const ConfigurationPage({super.key});
@@ -17,6 +19,9 @@ class ConfigurationPage extends StatefulWidget {
 
 class _ConfigurationPageState extends State<ConfigurationPage> {
   bool _isEditingAccount = false;
+  bool _isLoadingUser = true;
+  bool _isSavingAccount = false;
+  bool _isSavingPreferences = false;
   
   // Controllers for account information
   final TextEditingController _nameController = TextEditingController();
@@ -24,16 +29,16 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _currentPasswordController = TextEditingController();
   
-  // Mock user data - replace with actual user data
-  String _userName = 'Maria';
-  String _userEmail = 'maria@example.com';
+  // User data - will be loaded from API
+  String _userName = '';
+  String _userEmail = '';
   final String _hiddenPassword = '••••••••••••';
 
   @override
   void initState() {
     super.initState();
-    _nameController.text = _userName;
-    _emailController.text = _userEmail;
+    _loadUserData();
+    print("loaded");
   }
 
   @override
@@ -43,6 +48,61 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     _newPasswordController.dispose();
     _currentPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      // Load user data from API
+      final userData = await BackendApiManager.getCurrentUser();
+      print(userData);
+      
+      // Debug: Get session info
+      try {
+        final sessionInfo = await BackendApiManager.getSessionInfo();
+        print('DEBUG - Session info in _loadUserData: $sessionInfo');
+      } catch (e) {
+        print('DEBUG - Failed to get session info: $e');
+      }
+      
+      setState(() {
+        _userName = userData['name'] ?? '';
+        _userEmail = userData['email'] ?? '';
+        _nameController.text = _userName;
+        _emailController.text = _userEmail;
+        _isLoadingUser = false;
+      });
+    
+      // if (user != null && user.token != null) {
+      //   _authToken = user.token;
+        
+        
+      // } else {
+      //   // Fallback: use data from controller if no token
+      //   print("Fallback");
+      //   setState(() {
+      //     _userName = user?.name ?? '';
+      //     _userEmail = user?.email ?? '';
+      //     _nameController.text = _userName;
+      //     _emailController.text = _userEmail;
+      //     _isLoadingUser = false;
+      //   });
+      // }
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        _isLoadingUser = false;
+      });
+      
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao carregar dados do usuário: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -64,21 +124,23 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
             ),
             centerTitle: false,
           ),
-          body: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 100.0), // Added bottom padding for nav bar
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Account and Access Section
-                _buildAccountSection(),
-                
-                const SizedBox(height: 32),
-                
-                // Preferences Section
-                _buildPreferencesSection(controller),
-              ],
-            ),
-          ),
+          body: _isLoadingUser 
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 100.0), // Added bottom padding for nav bar
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Account and Access Section
+                    _buildAccountSection(),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Preferences Section
+                    _buildPreferencesSection(controller),
+                  ],
+                ),
+              ),
           bottomNavigationBar: BottomNavigationComponent(
             forcePage: BottomNavPage.settings, // Explicitly set as settings page
             onPageChanged: (page) {
@@ -130,14 +192,20 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                 ],
               ),
               GestureDetector(
-                onTap: _toggleAccountEditing,
+                onTap: _isSavingAccount ? null : _toggleAccountEditing,
                 child: Container(
                   padding: const EdgeInsets.all(8),
-                  child: Icon(
-                    _isEditingAccount ? Icons.check : Icons.edit,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
+                  child: _isSavingAccount
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        _isEditingAccount ? Icons.check : Icons.edit,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
                 ),
               ),
             ],
@@ -279,7 +347,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -288,14 +356,46 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section Header
-          const Text(
-            'Preferências',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
-            ),
+          // Section Header with Save Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.tune,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Preferências',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: _isSavingPreferences ? null : _savePreferences,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  child: _isSavingPreferences
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Icon(
+                        Icons.check,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                ),
+              ),
+            ],
           ),
           
           const SizedBox(height: 24),
@@ -344,15 +444,12 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     );
   }
 
-  void _toggleAccountEditing() {
+  void _toggleAccountEditing() async {
     if (_isEditingAccount) {
       // Validate fields before saving
       if (_canSaveAccountChanges()) {
         // Save changes logic here
-        _saveAccountChanges();
-        setState(() {
-          _isEditingAccount = false;
-        });
+        await _saveAccountChanges();
       } else {
         // Show validation error
         _showValidationError();
@@ -363,6 +460,123 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         _nameController.text = _userName;
         _emailController.text = _userEmail;
       });
+    }
+  }
+
+  Future<void> _saveAccountChanges() async {
+    setState(() {
+      _isSavingAccount = true;
+    });
+
+    try {
+      bool hasPasswordChange = _newPasswordController.text.isNotEmpty;
+      bool hasUserInfoChange = _nameController.text != _userName || _emailController.text != _userEmail;
+
+      // Case 1: Password change requested
+      if (hasPasswordChange) {
+        // Change password first
+        await BackendApiManager.changePassword(
+          currentPassword: _currentPasswordController.text,
+          newPassword: _newPasswordController.text,
+        );
+      }
+
+      // Case 2: User info change (always do this if there are changes, even with password change)
+      if (hasUserInfoChange) {
+        await BackendApiManager.updateUser(
+          name: _nameController.text,
+          email: _emailController.text,
+        );
+      }
+
+      // Update local state
+      setState(() {
+        _userName = _nameController.text;
+        _userEmail = _emailController.text;
+        _isEditingAccount = false;
+        _isSavingAccount = false;
+      });
+      
+      // Clear password fields
+      _newPasswordController.clear();
+      _currentPasswordController.clear();
+      
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Informações atualizadas com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isSavingAccount = false;
+      });
+      
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao atualizar informações'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      print("[DEBUG - Config] Error to update user info: $e");
+    }
+  }
+
+  Future<void> _savePreferences() async {
+    setState(() {
+      _isSavingPreferences = true;
+    });
+
+    try {
+      final controller = context.read<OnboardingController>();
+      final user = controller.user;
+      
+      if (user == null) {
+        throw Exception('Usuário não encontrado');
+      }
+
+      // Convert preferences to API format
+      await BackendApiManager.updateProfile(
+        userId: user.id,
+        interests: controller.preferences.interests,
+        deliveryDays: OnboardingHelper.convertDayNumbersToNames(controller.preferences.frequencyDays),
+        format: OnboardingHelper.convertNewsletterFormatToApi(controller.preferences.newsletterFormat),
+        deliveryTime: controller.preferences.frequencyTime,
+      );
+
+      setState(() {
+        _isSavingPreferences = false;
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Preferências atualizadas com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isSavingPreferences = false;
+      });
+      
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao atualizar preferências: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -378,26 +592,6 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     }
     
     return true;
-  }
-
-  void _saveAccountChanges() {
-    // Update user data
-    setState(() {
-      _userName = _nameController.text;
-      _userEmail = _emailController.text;
-    });
-    
-    // Clear password fields
-    _newPasswordController.clear();
-    _currentPasswordController.clear();
-    
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Informações atualizadas com sucesso!'),
-        backgroundColor: Colors.green,
-      ),
-    );
   }
 
   void _handleNavigation(BottomNavPage page) {

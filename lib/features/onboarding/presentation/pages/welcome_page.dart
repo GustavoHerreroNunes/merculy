@@ -2,14 +2,78 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/services/token_manager.dart';
+import '../../../../core/utils/backend_api_manager.dart';
 import '../onboarding_controller.dart';
 import '../onboarding_state.dart';
+import '../../../newsletters/presentation/pages/my_newsletters_screen.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
 
   @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  bool _isCheckingAuth = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthentication();
+  }
+
+  Future<void> _checkAuthentication() async {
+    try {
+      // Check if user has a token
+      if (TokenManager.isLoggedIn) {
+        print('AUTH: Token found, validating with server...');
+        
+        // Validate token with server by calling /me endpoint
+        final userData = await BackendApiManager.getCurrentUser();
+        
+        if (userData != null && mounted) {
+          print('AUTH: Token is valid, redirecting to home...');
+          // Token is valid, redirect to main app
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const MyNewslettersScreen(),
+            ),
+          );
+          return;
+        }
+      }
+      
+      print('AUTH: No valid token, showing welcome screen...');
+    } catch (e) {
+      print('AUTH: Token validation failed: $e');
+      // Token is invalid, clear it
+      await TokenManager.clearAuthData();
+    }
+    
+    // Show welcome page
+    if (mounted) {
+      setState(() {
+        _isCheckingAuth = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Show loading while checking authentication
+    if (_isCheckingAuth) {
+      return const Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
