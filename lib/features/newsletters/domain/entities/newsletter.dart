@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:merculy/main.dart';
 import 'news_headline.dart';
 
 class Newsletter {
@@ -25,10 +26,10 @@ class Newsletter {
   });
 
   List<NewsHeadline> get mainNews => 
-      headlines.where((headline) => headline.isMainNews).take(3).toList();
+      headlines.take(3).toList();
 
   List<NewsHeadline> get otherNews => 
-      headlines.where((headline) => !headline.isMainNews).take(4).toList();
+      headlines.where((headline) => !mainNews.contains(headline)).toList();
 
   factory Newsletter.fromJson(Map<String, dynamic> json) {
     return Newsletter(
@@ -55,8 +56,8 @@ class Newsletter {
       'date': date.toIso8601String(),
       'hasNewData': hasNewData,
       'headlines': headlines.map((headline) => headline.toJson()).toList(),
-      'primaryColor': primaryColor.value,
-      'secondaryColor': secondaryColor.value,
+      'primaryColor': primaryColor.toARGB32(),
+      'secondaryColor': secondaryColor.toARGB32(),
     };
   }
 }

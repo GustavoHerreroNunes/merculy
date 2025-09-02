@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../services/token_manager.dart';
 
-const String baseUrl = 'https://merculy-app-hehte6a4ffc5hqeh.brazilsouth-01.azurewebsites.net';
+const String baseUrl = 'http://127.0.0.1:8000';
 const Map<String, String> baseHeaders = {'Content-Type': 'application/json; charset=utf-8'};
 
 class BackendApiManager {
@@ -293,6 +293,72 @@ class BackendApiManager {
       // Still clear local token even if server call fails
       await TokenManager.clearAuthData();
       print('AUTH: Logout completed (with error): $e');
+    }
+  }
+
+  // Generate a new newsletter for the user
+  static Future<Map<String, dynamic>> generateNewsletter() async {
+    try {
+      final url = Uri.parse('$baseUrl/api/newsletter/generate');
+      
+      final headers = <String, String>{
+        ...baseHeaders,
+        ...TokenManager.getAuthHeaders(),
+      };
+
+      final response = await http.post(url, headers: headers);
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to generate newsletter: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error generating newsletter: $e');
+    }
+  }
+
+  // Get all user's newsletters
+  static Future<Map<String, dynamic>> getNewsletters() async {
+    try {
+      final url = Uri.parse('$baseUrl/api/newsletters');
+      
+      final headers = <String, String>{
+        ...baseHeaders,
+        ...TokenManager.getAuthHeaders(),
+      };
+
+      final response = await http.get(url, headers: headers);
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get newsletters: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error getting newsletters: $e');
+    }
+  }
+
+  // Get all available topics
+  static Future<Map<String, dynamic>> getTopics() async {
+    try {
+      final url = Uri.parse('$baseUrl/api/topics/detailed');
+      
+      final headers = <String, String>{
+        ...baseHeaders,
+        ...TokenManager.getAuthHeaders(),
+      };
+
+      final response = await http.get(url, headers: headers);
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get topics: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error getting topics: $e');
     }
   }
 }

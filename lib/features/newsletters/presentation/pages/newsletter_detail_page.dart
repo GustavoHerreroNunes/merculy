@@ -161,6 +161,9 @@ class NewsletterDetailPage extends StatelessWidget {
   }
 
   Widget _buildMainNewsCard(BuildContext context, NewsHeadline headline) {
+    print('DEBUG UI: Building main news card for: ${headline.title}');
+    print('DEBUG UI: Cover image URL: ${headline.coverImage}');
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -168,7 +171,7 @@ class NewsletterDetailPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -178,28 +181,7 @@ class NewsletterDetailPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Cover Image - Always show for main news
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              color: Colors.grey[300],
-              image: headline.coverImage != null 
-                ? DecorationImage(
-                    image: NetworkImage(headline.coverImage!),
-                    fit: BoxFit.cover,
-                    onError: (error, stackTrace) {
-                      // Fallback to placeholder if image fails to load
-                    },
-                  )
-                : null,
-            ),
-            child: headline.coverImage == null 
-              ? const Center(
-                  child: Icon(Icons.image, size: 50, color: Colors.grey),
-                )
-              : null,
-          ),
+          _buildCoverImage(headline),
           
           Padding(
             padding: const EdgeInsets.all(20),
@@ -286,7 +268,7 @@ class NewsletterDetailPage extends StatelessWidget {
                           height: 6,
                           margin: const EdgeInsets.only(top: 6, right: 12),
                           decoration: BoxDecoration(
-                            color: Colors.grey,
+                            color: Colors.orange,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -295,7 +277,7 @@ class NewsletterDetailPage extends StatelessWidget {
                             'Assunto de interesse geral com informações relevantes',
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.grey,
+                              color: Colors.orange,
                               height: 1.4,
                             ),
                           ),
@@ -321,6 +303,102 @@ class NewsletterDetailPage extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCoverImage(NewsHeadline headline) {
+    return Container(
+      height: 200,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            newsletter.primaryColor.withValues(alpha: 0.1),
+            newsletter.secondaryColor.withValues(alpha: 0.3),
+          ],
+        ),
+      ),
+      child: Stack(
+        children: [
+          // Try to load network image with fallback
+          if (headline.coverImage != null && headline.coverImage!.isNotEmpty)
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Image.network(
+                headline.coverImage!,
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return _buildImagePlaceholder('Carregando imagem...');
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  print('DEBUG UI: Image failed to load: ${headline.coverImage}');
+                  return _buildImagePlaceholder('Imagem não disponível');
+                },
+              ),
+            )
+          else
+            _buildImagePlaceholder('Sem imagem'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder(String message) {
+    return Container(
+      height: 200,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            newsletter.primaryColor.withValues(alpha: 0.2),
+            newsletter.primaryColor.withValues(alpha: 0.1),
+          ],
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.newspaper,
+            size: 48,
+            color: newsletter.primaryColor.withValues(alpha: 0.7),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            style: TextStyle(
+              color: newsletter.primaryColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: newsletter.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              'Notícia Merculy',
+              style: TextStyle(
+                color: newsletter.primaryColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
