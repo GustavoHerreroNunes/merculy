@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
 import 'core/constants/color_palette.dart';
 import 'core/services/google_sign_in_service.dart';
+import 'core/services/web_image_cache_service.dart';
 import 'features/onboarding/presentation/pages/welcome_page.dart';
 import 'features/onboarding/presentation/pages/login_email_page.dart';
 import 'features/onboarding/presentation/pages/login_password_page.dart';
@@ -25,6 +27,14 @@ void main() async {
   
   // Initialize TokenManager
   await TokenManager.initialize();
+  
+  // Initialize Image Cache Service
+  if (kIsWeb) {
+    await WebImageCacheService.initialize();
+  } else {
+    // For mobile/desktop, you'd use ImageCacheService.initialize();
+    print('Mobile/Desktop image cache not implemented yet');
+  }
   
   // Initialize Google Sign-In
   try {

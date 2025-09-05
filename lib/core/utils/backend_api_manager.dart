@@ -282,13 +282,23 @@ class BackendApiManager {
   // Logout user
   static Future<void> logout() async {
     try {
-      // Call logout endpoint if available
-      // final url = Uri.parse('$baseUrl/api/auth/logout');
-      // final response = await http.post(url, headers: {...baseHeaders, ...TokenManager.getAuthHeaders()});
+      final url = Uri.parse('$baseUrl/api/logout');
+      
+      final headers = <String, String>{
+        ...baseHeaders,
+        ...TokenManager.getAuthHeaders(),
+      };
+
+      final response = await http.post(url, headers: headers);
       
       // Clear local token regardless of server response
       await TokenManager.clearAuthData();
-      print('AUTH: User logged out successfully');
+      
+      if (response.statusCode == 200) {
+        print('AUTH: User logged out successfully from server');
+      } else {
+        print('AUTH: Server logout failed (${response.statusCode}), but local token cleared');
+      }
     } catch (e) {
       // Still clear local token even if server call fails
       await TokenManager.clearAuthData();

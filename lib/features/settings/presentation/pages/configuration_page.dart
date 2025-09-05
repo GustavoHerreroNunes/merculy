@@ -4,6 +4,7 @@ import '../../../../core/constants/color_palette.dart';
 import '../../../../core/components/bottom_navigation_component.dart';
 import '../../../../core/navigation/navigation_controller.dart';
 import '../../../../core/utils/backend_api_manager.dart';
+import '../../../../main.dart';
 import '../../../onboarding/presentation/onboarding_controller.dart';
 import '../../../onboarding/presentation/components/interests_selector_component.dart';
 import '../../../onboarding/presentation/components/weekday_selector_component.dart';
@@ -54,7 +55,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     try {
       // Load user data from API
       final userData = await BackendApiManager.getCurrentUser();
-      print(userData);
+      print('DEBUG - Raw user data: $userData');
       
       // Debug: Get session info
       try {
@@ -64,13 +65,19 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         print('DEBUG - Failed to get session info: $e');
       }
       
+      // Extract user data from nested structure
+      final userInfo = userData['user'] as Map<String, dynamic>?;
+      print('DEBUG - Extracted user info: $userInfo');
+      
       setState(() {
-        _userName = userData['name'] ?? '';
-        _userEmail = userData['email'] ?? '';
+        _userName = userInfo?['name'] ?? '';
+        _userEmail = userInfo?['email'] ?? '';
         _nameController.text = _userName;
         _emailController.text = _userEmail;
         _isLoadingUser = false;
       });
+      
+      print('DEBUG - Set state with name: $_userName, email: $_userEmail');
     
       // if (user != null && user.token != null) {
       //   _authToken = user.token;
@@ -133,6 +140,11 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
                   children: [
                     // Account and Access Section
                     _buildAccountSection(),
+                    
+                    const SizedBox(height: 32),
+                    
+                    // Logout Button Section
+                    _buildLogoutSection(),
                     
                     const SizedBox(height: 32),
                     
@@ -630,5 +642,163 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         backgroundColor: Colors.red,
       ),
     );
+  }
+
+  Widget _buildLogoutSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Header
+          Row(
+            children: [
+              Icon(
+                Icons.logout,
+                color: Colors.red[600],
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Sair da Conta',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          const Text(
+            'Ao fazer logout, você será redirecionado para a tela de login.',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.textMedium,
+              height: 1.5,
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Logout Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _showLogoutConfirmation,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[600],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.logout, size: 18),
+                  SizedBox(width: 8),
+                  Text(
+                    'Fazer Logout',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirmar Logout'),
+          content: const Text('Tem certeza de que deseja sair da sua conta?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _performLogout();
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red[600],
+              ),
+              child: const Text('Sair'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _performLogout() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Call the logout API
+      await BackendApiManager.logout();
+
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+
+      // Navigate to welcome page and clear the navigation stack
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => ChangeNotifierProvider(
+              create: (_) => OnboardingController(),
+              child: const OnboardingFlow(),
+            ),
+          ),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Close loading dialog if still showing
+      if (mounted) Navigator.of(context).pop();
+
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao fazer logout: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

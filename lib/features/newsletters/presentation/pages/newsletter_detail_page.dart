@@ -1,16 +1,63 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../../../core/constants/color_palette.dart';
+import '../../../../core/services/web_image_cache_service.dart';
+import '../../../../core/components/web_smart_network_image.dart';
 import '../../domain/entities/newsletter.dart';
 import '../../domain/entities/news_headline.dart';
 import 'article_detail_page.dart';
 
-class NewsletterDetailPage extends StatelessWidget {
+class NewsletterDetailPage extends StatefulWidget {
   final Newsletter newsletter;
 
   const NewsletterDetailPage({
     super.key,
     required this.newsletter,
   });
+
+  @override
+  State<NewsletterDetailPage> createState() => _NewsletterDetailPageState();
+}
+
+class _NewsletterDetailPageState extends State<NewsletterDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    print('📰 NewsletterDetailPage: Opening newsletter: ${widget.newsletter.title}');
+    _cleanupImageCache();
+    _debugNewsletterImages();
+  }
+
+  /// Debug newsletter images
+  void _debugNewsletterImages() {
+    print('🖼️ NewsletterDetailPage: Main news images:');
+    for (int i = 0; i < widget.newsletter.mainNews.length; i++) {
+      final headline = widget.newsletter.mainNews[i];
+      print('   [$i] ${headline.title}: ${headline.coverImage ?? "NO IMAGE"}');
+    }
+    
+    print('🖼️ NewsletterDetailPage: Other news images:');
+    for (int i = 0; i < widget.newsletter.otherNews.length; i++) {
+      final headline = widget.newsletter.otherNews[i];
+      print('   [$i] ${headline.title}: ${headline.coverImage ?? "NO IMAGE"}');
+    }
+  }
+
+  /// Cleanup image cache when opening newsletter detail
+  Future<void> _cleanupImageCache() async {
+    try {
+      print('🧹 NewsletterDetailPage: Cleaning up image cache...');
+      if (kIsWeb) {
+        await WebImageCacheService.clearCache();
+      } else {
+        // For mobile/desktop
+        print('Mobile cache cleanup not implemented yet');
+      }
+      print('✅ NewsletterDetailPage: Image cache cleared successfully');
+    } catch (e) {
+      print('💥 NewsletterDetailPage: Failed to clear image cache: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,12 +70,12 @@ class NewsletterDetailPage extends StatelessWidget {
             expandedHeight: 200,
             floating: false,
             pinned: true,
-            backgroundColor: newsletter.primaryColor,
+            backgroundColor: widget.newsletter.primaryColor,
             flexibleSpace: FlexibleSpaceBar(
               background: CustomPaint(
                 painter: NewsletterHeaderPainter(
-                  primaryColor: newsletter.primaryColor,
-                  secondaryColor: newsletter.secondaryColor,
+                  primaryColor: widget.newsletter.primaryColor,
+                  secondaryColor: widget.newsletter.secondaryColor,
                 ),
                 child: Container(
                   padding: const EdgeInsets.all(24),
@@ -46,7 +93,7 @@ class NewsletterDetailPage extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              newsletter.icon,
+                              widget.newsletter.icon,
                               color: Colors.white,
                               size: 30,
                             ),
@@ -57,7 +104,7 @@ class NewsletterDetailPage extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  newsletter.title,
+                                  widget.newsletter.title,
                                   style: const TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
@@ -66,7 +113,7 @@ class NewsletterDetailPage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  _formatDate(newsletter.date),
+                                  _formatDate(widget.newsletter.date),
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.white.withOpacity(0.9),
@@ -100,16 +147,16 @@ class NewsletterDetailPage extends StatelessWidget {
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+                children: [                 
                   // Main News Section
-                  if (newsletter.mainNews.isNotEmpty) ...[
+                  if (widget.newsletter.mainNews.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     _buildMainNewsSection(context),
                     const SizedBox(height: 32),
                   ],
                   
                   // Other News Section
-                  if (newsletter.otherNews.isNotEmpty) ...[
+                  if (widget.newsletter.otherNews.isNotEmpty) ...[
                                         _buildOtherNewsSection(context),
                     const SizedBox(height: 32),
                   ],
@@ -122,8 +169,8 @@ class NewsletterDetailPage extends StatelessWidget {
                       icon: const Icon(Icons.share),
                       label: const Text('Compartilhar Newsletter'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: newsletter.primaryColor,
-                        side: BorderSide(color: newsletter.primaryColor),
+                        foregroundColor: widget.newsletter.primaryColor,
+                        side: BorderSide(color: widget.newsletter.primaryColor),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -155,7 +202,7 @@ class NewsletterDetailPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        ...newsletter.mainNews.map((headline) => _buildMainNewsCard(context, headline)),
+        ...widget.newsletter.mainNews.map((headline) => _buildMainNewsCard(context, headline)),
       ],
     );
   }
@@ -238,7 +285,7 @@ class NewsletterDetailPage extends StatelessWidget {
                               height: 6,
                               margin: const EdgeInsets.only(top: 6, right: 12),
                               decoration: BoxDecoration(
-                                color: newsletter.primaryColor,
+                                color: widget.newsletter.primaryColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -293,11 +340,11 @@ class NewsletterDetailPage extends StatelessWidget {
                     child: Text(
                       'Detalhes',
                       style: TextStyle(
-                        color: newsletter.primaryColor,
+                        color: widget.newsletter.primaryColor,
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.underline,
-                        decorationColor: newsletter.primaryColor,
+                        decorationColor: widget.newsletter.primaryColor,
                       ),
                     ),
                   ),
@@ -311,6 +358,9 @@ class NewsletterDetailPage extends StatelessWidget {
   }
 
   Widget _buildCoverImage(NewsHeadline headline) {
+    print('🖼️ NewsletterDetailPage: Building cover image for: "${headline.title}"');
+    print('🖼️ NewsletterDetailPage: Image URL: ${headline.coverImage ?? "NULL"}');
+    
     return Container(
       height: 200,
       width: double.infinity,
@@ -320,34 +370,33 @@ class NewsletterDetailPage extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            newsletter.primaryColor.withValues(alpha: 0.1),
-            newsletter.secondaryColor.withValues(alpha: 0.3),
+            widget.newsletter.primaryColor.withValues(alpha: 0.1),
+            widget.newsletter.secondaryColor.withValues(alpha: 0.3),
           ],
         ),
       ),
       child: Stack(
         children: [
           // Try to load network image with fallback
-          if (headline.coverImage != null && headline.coverImage!.isNotEmpty)
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Image.network(
-                headline.coverImage!,
+          if (headline.coverImage != null && headline.coverImage!.isNotEmpty) ...[
+            () {
+              print('✅ NewsletterDetailPage: Creating WebSmartNetworkImage for ${headline.coverImage}');
+              return WebSmartNetworkImage(
+                imageUrl: headline.coverImage!,
                 height: 200,
                 width: double.infinity,
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return _buildImagePlaceholder('Carregando imagem...');
-                },
-                errorBuilder: (context, error, stackTrace) {
-                  print('DEBUG UI: Image failed to load: ${headline.coverImage}');
-                  return _buildImagePlaceholder('Imagem não disponível');
-                },
-              ),
-            )
-          else
-            _buildImagePlaceholder('Sem imagem'),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                placeholder: _buildImagePlaceholder('Carregando imagem...'),
+                errorWidget: _buildImagePlaceholder('Imagem não disponível'),
+              );
+            }(),
+          ] else ...[
+            () {
+              print('⚠️ NewsletterDetailPage: No image URL, showing placeholder');
+              return _buildImagePlaceholder('Sem imagem');
+            }(),
+          ],
         ],
       ),
     );
@@ -363,8 +412,8 @@ class NewsletterDetailPage extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            newsletter.primaryColor.withValues(alpha: 0.2),
-            newsletter.primaryColor.withValues(alpha: 0.1),
+            widget.newsletter.primaryColor.withValues(alpha: 0.2),
+            widget.newsletter.primaryColor.withValues(alpha: 0.1),
           ],
         ),
       ),
@@ -374,13 +423,13 @@ class NewsletterDetailPage extends StatelessWidget {
           Icon(
             Icons.newspaper,
             size: 48,
-            color: newsletter.primaryColor.withValues(alpha: 0.7),
+            color: widget.newsletter.primaryColor.withValues(alpha: 0.7),
           ),
           const SizedBox(height: 12),
           Text(
             message,
             style: TextStyle(
-              color: newsletter.primaryColor,
+              color: widget.newsletter.primaryColor,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -389,13 +438,13 @@ class NewsletterDetailPage extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: newsletter.primaryColor.withValues(alpha: 0.1),
+              color: widget.newsletter.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               'Notícia Merculy',
               style: TextStyle(
-                color: newsletter.primaryColor,
+                color: widget.newsletter.primaryColor,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -417,7 +466,7 @@ class NewsletterDetailPage extends StatelessWidget {
           Container(
             width: double.infinity, // Full width
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            color: newsletter.primaryColor, // No border radius
+            color: widget.newsletter.primaryColor, // No border radius
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -439,7 +488,7 @@ class NewsletterDetailPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          ...newsletter.otherNews.map((headline) => _buildOtherNewsCard(context, headline)),
+          ...widget.newsletter.otherNews.map((headline) => _buildOtherNewsCard(context, headline)),
         ],
       ),
     );
@@ -473,14 +522,14 @@ class NewsletterDetailPage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: newsletter.primaryColor.withOpacity(0.1),
+                  color: widget.newsletter.primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   source.fantasyName,
                   style: TextStyle(
                     fontSize: 12,
-                    color: newsletter.primaryColor,
+                    color: widget.newsletter.primaryColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -535,10 +584,10 @@ class NewsletterDetailPage extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => ArticleDetailPage(
           article: headline,
-          newsletterType: newsletter.title,
-          primaryColor: newsletter.primaryColor,
-          secondaryColor: newsletter.secondaryColor,
-          newsletterIcon: newsletter.icon,
+          newsletterType: widget.newsletter.title,
+          primaryColor: widget.newsletter.primaryColor,
+          secondaryColor: widget.newsletter.secondaryColor,
+          newsletterIcon: widget.newsletter.icon,
         ),
       ),
     );

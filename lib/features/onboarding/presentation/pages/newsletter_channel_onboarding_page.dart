@@ -14,9 +14,9 @@ class NewsletterChannelOnboardingPage extends StatefulWidget {
 class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboardingPage> {
   final TextEditingController _searchController = TextEditingController();
   final List<Map<String, dynamic>> _channels = [
-    {'name': 'Other Brasil', 'icon': Icons.language},
-    {'name': 'HNC', 'icon': Icons.science},
-    {'name': 'Notícia em Foco', 'icon': Icons.radio},
+    {'name': 'Metropoles', 'icon': Icons.location_city},
+    {'name': 'Terra', 'icon': Icons.science},
+    {'name': 'Globo', 'icon': Icons.work_outlined},
     {'name': 'Agora', 'icon': Icons.flash_on},
     {'name': 'Coffee News', 'icon': Icons.coffee},
     {'name': 'O Analógico', 'icon': Icons.memory},
@@ -111,14 +111,14 @@ class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboa
                   ),
                   itemBuilder: (context, i) {
                     final channel = filteredChannels[i];
-                    final followed = _followedChannels.contains(channel['name']);
+                    final followed = _followedChannels.contains(channel['name'].toString().toLowerCase());
                     return GestureDetector(
                       onTap: () {
                         setState(() {
                           if (followed) {
-                            _followedChannels.remove(channel['name']);
+                            _followedChannels.remove(channel['name'].toString().toLowerCase());
                           } else {
-                            _followedChannels.add(channel['name']);
+                            _followedChannels.add(channel['name'].toString().toLowerCase());
                           }
                         });
                       },
