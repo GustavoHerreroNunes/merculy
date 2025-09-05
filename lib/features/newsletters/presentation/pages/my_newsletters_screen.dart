@@ -7,6 +7,7 @@ import '../../../../core/services/newsletter_service.dart';
 import '../../../settings/presentation/pages/configuration_page.dart';
 import '../../domain/entities/newsletter.dart';
 import 'newsletter_detail_page.dart';
+import 'channels_screen.dart';
 
 class MyNewslettersScreen extends StatefulWidget {
   const MyNewslettersScreen({super.key});
@@ -302,9 +303,11 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
         );
         break;
       case BottomNavPage.channels:
-        // TODO: Navigate to channels page
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Página de canais em desenvolvimento')),
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const ChannelsScreen(),
+            settings: const RouteSettings(name: '/channels'),
+          ),
         );
         break;
       case BottomNavPage.settings:

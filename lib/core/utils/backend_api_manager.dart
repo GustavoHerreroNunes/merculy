@@ -15,6 +15,7 @@ class BackendApiManager {
     required String newsletterFormat,
     required List<String> deliveryDays,
     required String deliveryTime,
+    required List<String> followedChannels,
   }) async {
     final url = Uri.parse('$baseUrl/api/auth/register');
     final headers = baseHeaders;
@@ -27,7 +28,8 @@ class BackendApiManager {
       "delivery_schedule": {
         "days": deliveryDays,
         "time": deliveryTime
-      }
+      },
+      "followed_channels": followedChannels
     });
 
     try {
@@ -129,11 +131,12 @@ class BackendApiManager {
   }
 
   static Future<Map<String, dynamic>> updateProfile({
-    required String userId,
-    required List<String> interests,
-    required List<String> deliveryDays,
-    required String format,
-    required String deliveryTime,
+    String? userId,
+    List<String>? interests,
+    List<String>? deliveryDays,
+    String? format,
+    String? deliveryTime,
+    List<String>? followedChannels
   }) async {
     try {
       final url = Uri.parse('$baseUrl/api/auth/update-profile');
@@ -141,14 +144,30 @@ class BackendApiManager {
         ...baseHeaders,
         ...TokenManager.getAuthHeaders(),
       };
-      
-      final body = json.encode({
-        'user_id': userId,
-        'interests': interests,
-        'delivery_days': deliveryDays,
-        'format': format,
-        'delivery_time': deliveryTime,
-      });
+
+      Map<String, dynamic> requestBody = {
+        "delivery_schedule": {}
+      };
+
+      if(userId != null){
+        requestBody["user_id"] = userId;
+      }
+      if(interests != null){
+        requestBody["interests"] = interests;
+      }
+      if(format != null){
+        requestBody["format"] = format;
+      }
+      if(deliveryDays != null){
+        requestBody["delivery_schedule"]["delivery_days"] = deliveryDays;
+      }
+      if(deliveryTime != null){
+        requestBody["delivery_schedule"]["delivery_time"] = deliveryTime;
+      }
+      if(followedChannels != null){
+        requestBody["followed_channels"] = followedChannels;
+      }
+      final body = json.encode(requestBody);
 
       final response = await http.put(url, headers: headers, body: body);
       
@@ -369,6 +388,28 @@ class BackendApiManager {
       }
     } catch (e) {
       throw Exception('Error getting topics: $e');
+    }
+  }
+
+  // Get all available news sources
+  static Future<Map<String, dynamic>> getSources() async {
+    try {
+      final url = Uri.parse('$baseUrl/api/sources');
+      
+      final headers = <String, String>{
+        ...baseHeaders,
+        ...TokenManager.getAuthHeaders(),
+      };
+
+      final response = await http.get(url, headers: headers);
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get sources: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error getting sources: $e');
     }
   }
 }

@@ -48,9 +48,12 @@ class _OnboardingFinishedPageState extends State<OnboardingFinishedPage> {
           deliveryDays: OnboardingHelper.convertDayNumbersToNames(preferences.frequencyDays),
           format: OnboardingHelper.convertNewsletterFormatToApi(preferences.newsletterFormat),
           deliveryTime: preferences.frequencyTime,
+          followedChannels: preferences.followedChannels
         );
       } else {
         // Regular registration (email/password flow)
+        print('[DEBUG]');
+        print(preferences.followedChannels);
         response = await _apiManager.registerUser(
           email: user.email,
           name: user.name,
@@ -59,6 +62,7 @@ class _OnboardingFinishedPageState extends State<OnboardingFinishedPage> {
           newsletterFormat: OnboardingHelper.convertNewsletterFormatToApi(preferences.newsletterFormat),
           deliveryDays: OnboardingHelper.convertDayNumbersToNames(preferences.frequencyDays),
           deliveryTime: preferences.frequencyTime,
+          followedChannels: preferences.followedChannels
         );
       }
 

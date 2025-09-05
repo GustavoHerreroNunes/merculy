@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/utils/backend_api_manager.dart';
 import '../onboarding_controller.dart';
 
 class NewsletterChannelOnboardingPage extends StatefulWidget {
@@ -13,16 +14,51 @@ class NewsletterChannelOnboardingPage extends StatefulWidget {
 
 class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboardingPage> {
   final TextEditingController _searchController = TextEditingController();
-  final List<Map<String, dynamic>> _channels = [
-    {'name': 'Metropoles', 'icon': Icons.location_city},
-    {'name': 'Terra', 'icon': Icons.science},
-    {'name': 'Globo', 'icon': Icons.work_outlined},
-    {'name': 'Agora', 'icon': Icons.flash_on},
-    {'name': 'Coffee News', 'icon': Icons.coffee},
-    {'name': 'O Analógico', 'icon': Icons.memory},
-    // Add more as needed
-  ];
+  List<Map<String, dynamic>> _channels = [];
+  bool _isLoading = true;
+  String? _errorMessage;
   final Set<String> _followedChannels = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSources();
+  }
+
+  Future<void> _loadSources() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final response = await BackendApiManager.getSources();
+      final List<dynamic> sources = response['sources'] ?? [];
+      
+      setState(() {
+        _channels = sources.map((source) => {
+          'id': source['id'],
+          'name': source['name'],
+          'icon': Icons.newspaper, // Default icon for all sources
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Erro ao carregar fontes: $e';
+        _isLoading = false;
+        // Fallback to static data in case of error
+        _channels = [
+          {'id': 'metropoles', 'name': 'Metropoles', 'icon': Icons.location_city},
+          {'id': 'terra', 'name': 'Terra', 'icon': Icons.science},
+          {'id': 'globo', 'name': 'Globo', 'icon': Icons.work_outlined},
+          {'id': 'agora', 'name': 'Agora', 'icon': Icons.flash_on},
+          {'id': 'coffee-news', 'name': 'Coffee News', 'icon': Icons.coffee},
+          {'id': 'o-analogico', 'name': 'O Analógico', 'icon': Icons.memory},
+        ];
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -33,6 +69,7 @@ class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboa
   @override
   Widget build(BuildContext context) {
     final filteredChannels = _channels.where((c) => c['name'].toLowerCase().contains(_searchController.text.toLowerCase())).toList();
+    
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -100,75 +137,98 @@ class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboa
                 ),
               ),
               const SizedBox(height: 16),
-              Expanded(
-                child: GridView.builder(
-                  itemCount: filteredChannels.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 0.8,
+              if (_errorMessage != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
                   ),
-                  itemBuilder: (context, i) {
-                    final channel = filteredChannels[i];
-                    final followed = _followedChannels.contains(channel['name'].toString().toLowerCase());
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          if (followed) {
-                            _followedChannels.remove(channel['name'].toString().toLowerCase());
-                          } else {
-                            _followedChannels.add(channel['name'].toString().toLowerCase());
-                          }
-                        });
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: followed ? AppColors.primary : AppColors.border,
-                            width: 2,
-                          ),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red.shade700),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              Expanded(
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                         ),
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(channel['icon'], size: 36, color: AppColors.primary),
-                            const SizedBox(height: 8),
-                            Text(
-                              channel['name'],
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: AppColors.textDark,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      )
+                    : GridView.builder(
+                        itemCount: filteredChannels.length,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 16,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 0.8,
+                        ),
+                        itemBuilder: (context, i) {
+                          final channel = filteredChannels[i];
+                          final channelId = channel['id'].toString();
+                          final followed = _followedChannels.contains(channelId);
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                if (followed) {
+                                  _followedChannels.remove(channelId);
+                                } else {
+                                  _followedChannels.add(channelId);
+                                }
+                              });
+                            },
+                            child: Container(
                               decoration: BoxDecoration(
-                                color: followed ? AppColors.primary : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.primary, width: 1),
-                              ),
-                              child: Text(
-                                followed ? 'Seguindo' : 'Follow',
-                                style: TextStyle(
-                                  color: followed ? Colors.white : AppColors.primary,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: followed ? AppColors.primary : AppColors.border,
+                                  width: 2,
                                 ),
                               ),
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(channel['icon'], size: 36, color: AppColors.primary),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    channel['name'],
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: AppColors.textDark,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: followed ? AppColors.primary : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: AppColors.primary, width: 1),
+                                    ),
+                                    child: Text(
+                                      followed ? 'Seguindo' : 'Follow',
+                                      style: TextStyle(
+                                        color: followed ? Colors.white : AppColors.primary,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                ),
               ),
               Column(
                 children: [
@@ -176,6 +236,8 @@ class _NewsletterChannelOnboardingPageState extends State<NewsletterChannelOnboa
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: _followedChannels.isNotEmpty ? () {
+                        print('[DEBUG]');
+                        print(_followedChannels.toList());
                         context.read<OnboardingController>().setFollowedChannels(_followedChannels.toList());
                         context.read<OnboardingController>().nextStep();
                       } : null,

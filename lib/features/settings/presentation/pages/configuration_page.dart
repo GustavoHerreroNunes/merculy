@@ -10,6 +10,7 @@ import '../../../onboarding/presentation/components/interests_selector_component
 import '../../../onboarding/presentation/components/weekday_selector_component.dart';
 import '../../../onboarding/presentation/components/time_selector_component.dart';
 import '../../../onboarding/presentation/helpers/onboarding_helper.dart';
+import '../../../newsletters/presentation/pages/channels_screen.dart';
 
 class ConfigurationPage extends StatefulWidget {
   const ConfigurationPage({super.key});
@@ -560,6 +561,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         deliveryDays: OnboardingHelper.convertDayNumbersToNames(controller.preferences.frequencyDays),
         format: OnboardingHelper.convertNewsletterFormatToApi(controller.preferences.newsletterFormat),
         deliveryTime: controller.preferences.frequencyTime,
+        followedChannels: controller.preferences.followedChannels
       );
 
       setState(() {
@@ -618,9 +620,11 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         );
         break;
       case BottomNavPage.channels:
-        // TODO: Navigate to channels page
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Página de canais em desenvolvimento')),
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const ChannelsScreen(),
+            settings: const RouteSettings(name: '/channels'),
+          ),
         );
         break;
       case BottomNavPage.settings:
