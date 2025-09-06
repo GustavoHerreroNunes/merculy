@@ -179,10 +179,7 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
       
       // Bottom Navigation
       bottomNavigationBar: BottomNavigationComponent(
-        forcePage: BottomNavPage.newsletters,
-        onPageChanged: (page) {
-          _handleNavigation(page);
-        },
+        forcePage: BottomNavPage.newsletters
       ),
     );
   }
@@ -289,35 +286,5 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
         builder: (context) => NewsletterDetailPage(newsletter: newsletter),
       ),
     );
-  }
-
-  void _handleNavigation(BottomNavPage page) {
-    switch (page) {
-      case BottomNavPage.newsletters:
-        // Already on newsletters page, do nothing
-        break;
-      case BottomNavPage.saved:
-        // TODO: Navigate to saved articles page
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Página de salvos em desenvolvimento')),
-        );
-        break;
-      case BottomNavPage.channels:
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const ChannelsScreen(),
-            settings: const RouteSettings(name: '/channels'),
-          ),
-        );
-        break;
-      case BottomNavPage.settings:
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const ConfigurationPage(),
-            settings: const RouteSettings(name: '/configuration'),
-          ),
-        );
-        break;
-    }
   }
 }

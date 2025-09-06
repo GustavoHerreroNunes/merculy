@@ -198,7 +198,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
           bottomNavigationBar: BottomNavigationComponent(
             forcePage: BottomNavPage.settings, // Explicitly set as settings page
             onPageChanged: (page) {
-              _handleNavigation(page);
+              _saveInterestsBeforeExitOrNavigate();
             },
           ),
         );
@@ -647,37 +647,6 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     }
     
     return true;
-  }
-
-  void _handleNavigation(BottomNavPage page) {
-    // Save interests before navigating away
-    _saveInterestsBeforeExitOrNavigate();
-    
-    switch (page) {
-      case BottomNavPage.newsletters:
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const MyNewslettersScreen(),
-          settings: const RouteSettings(name: '/newsletters'))
-        );
-        break;
-      case BottomNavPage.saved:
-        // TODO: Navigate to saved articles page
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Página de salvos em desenvolvimento')),
-        );
-        break;
-      case BottomNavPage.channels:
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const ChannelsScreen(),
-            settings: const RouteSettings(name: '/channels'),
-          ),
-        );
-        break;
-      case BottomNavPage.settings:
-        // Already on settings page, do nothing
-        break;
-    }
   }
 
   void _showValidationError() {

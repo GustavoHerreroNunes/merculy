@@ -284,36 +284,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       ),
       bottomNavigationBar: BottomNavigationComponent(
         forcePage: BottomNavPage.channels,
-        onPageChanged: (page) {
-          // Handle navigation
-          switch (page) {
-            case BottomNavPage.newsletters:
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const MyNewslettersScreen(),
-                  settings: const RouteSettings(name: '/newsletters'),
-                ),
-              );
-              break;
-            case BottomNavPage.saved:
-              // TODO: Navigate to saved articles page
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Página de salvos em desenvolvimento')),
-              );
-              break;
-            case BottomNavPage.channels:
-              // Already on channels page
-              break;
-            case BottomNavPage.settings:
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const ConfigurationPage(),
-                  settings: const RouteSettings(name: '/settings'),
-                ),
-              );
-              break;
-          }
-        },
       ),
     );
   }

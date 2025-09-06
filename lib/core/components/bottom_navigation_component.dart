@@ -1,49 +1,70 @@
 import 'package:flutter/material.dart';
+import 'package:merculy/features/newsletters/presentation/pages/channels_screen.dart';
+import 'package:merculy/features/newsletters/presentation/pages/my_newsletters_screen.dart';
+import 'package:merculy/features/settings/presentation/pages/configuration_page.dart';
 import '../../../core/constants/color_palette.dart';
 import '../navigation/navigation_controller.dart';
 
 class BottomNavigationComponent extends StatelessWidget {
-  final Function(BottomNavPage) onPageChanged;
-  final BottomNavPage? forcePage; // Add optional explicit page
+  final Function(BottomNavPage)? onPageChanged;
+  final BottomNavPage forcePage; // Add optional explicit page
 
   const BottomNavigationComponent({
     super.key,
-    required this.onPageChanged,
-    this.forcePage,
+    this.onPageChanged,
+    required this.forcePage,
   });
 
-  BottomNavPage _getCurrentPageFromContext(BuildContext context) {
-    // Get the widget tree to determine current page
-    final widget = context.widget;
-    final widgetType = widget.runtimeType.toString();
-    
-    // Check if we're in a configuration-related context
-    if (widgetType.contains('Configuration') || 
-        widgetType.contains('Settings')) {
-      return BottomNavPage.settings;
+  int _getCurrentIndex(BuildContext context) {
+    // Use explicit page if provided, otherwise detect from context
+    final currentPage = forcePage;
+    switch (currentPage) {
+      case BottomNavPage.newsletters:
+        return 0;
+      case BottomNavPage.saved:
+        return 1;
+      case BottomNavPage.channels:
+        return 2;
+      case BottomNavPage.settings:
+        return 3;
     }
-    
-    // Check route settings
-    final route = ModalRoute.of(context);
-    final routeName = route?.settings.name ?? '';
-    
-    if (routeName.contains('configuration') || 
-        routeName.contains('settings')) {
-      return BottomNavPage.settings;
+  }
+
+  void _handleTap(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        if(_getCurrentIndex(context) != 0){
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const MyNewslettersScreen(),
+            settings: const RouteSettings(name: '/newsletters'))
+          );
+        }
+        break;
+      case 1:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Página de salvos em desenvolvimento')),
+        );
+        // onPageChanged(BottomNavPage.saved);
+        break;
+      case 2:
+        if(_getCurrentIndex(context) != 2){
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const ChannelsScreen(),
+            settings: const RouteSettings(name: '/channels'))
+          );
+        }
+        // onPageChanged(BottomNavPage.channels);
+        break;
+      case 3:
+        if(_getCurrentIndex(context) != 3){
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const ConfigurationPage(),
+            settings: const RouteSettings(name: '/settings'))
+          );
+        }
+        // onPageChanged(BottomNavPage.settings);
+        break;
     }
-    
-    // Check if parent context has configuration page
-    try {
-      final parentContext = context.findAncestorStateOfType<State>();
-      if (parentContext?.widget.runtimeType.toString().contains('Configuration') == true) {
-        return BottomNavPage.settings;
-      }
-    } catch (e) {
-      // Ignore error
-    }
-    
-    // Default to newsletters
-    return BottomNavPage.newsletters;
   }
 
   @override
@@ -73,7 +94,7 @@ class BottomNavigationComponent extends StatelessWidget {
           fontSize: 12,
         ),
         currentIndex: _getCurrentIndex(context),
-        onTap: (index) => _handleTap(index),
+        onTap: (index) => _handleTap(context, index),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
@@ -98,37 +119,5 @@ class BottomNavigationComponent extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  int _getCurrentIndex(BuildContext context) {
-    // Use explicit page if provided, otherwise detect from context
-    final currentPage = forcePage ?? _getCurrentPageFromContext(context);
-    switch (currentPage) {
-      case BottomNavPage.newsletters:
-        return 0;
-      case BottomNavPage.saved:
-        return 1;
-      case BottomNavPage.channels:
-        return 2;
-      case BottomNavPage.settings:
-        return 3;
-    }
-  }
-
-  void _handleTap(int index) {
-    switch (index) {
-      case 0:
-        onPageChanged(BottomNavPage.newsletters);
-        break;
-      case 1:
-        onPageChanged(BottomNavPage.saved);
-        break;
-      case 2:
-        onPageChanged(BottomNavPage.channels);
-        break;
-      case 3:
-        onPageChanged(BottomNavPage.settings);
-        break;
-    }
   }
 }
