@@ -89,15 +89,11 @@ class NewsletterService {
       final response = await BackendApiManager.getTopics();
       final topicsData = response['topics'] as List<dynamic>?;
       
-      print('DEBUG: Topics API response: $response');
-      print('DEBUG: Topics data: $topicsData');
-      
       if (topicsData != null) {
         _topicsCache.clear();
         for (var topicData in topicsData) {
           try {
             final topic = Topic.fromJson(topicData);
-            print('DEBUG: Loaded topic: ${topic.id} - ${topic.name}');
             _topicsCache[topic.id] = topic;
           } catch (e) {
             print('DEBUG: Error parsing topic: $e');
@@ -105,7 +101,6 @@ class NewsletterService {
           }
         }
         _topicsCacheTime = DateTime.now();
-        print('DEBUG: Final topics cache: ${_topicsCache.keys.toList()}');
       }
     } catch (e) {
       print('DEBUG: Error loading topics: $e');

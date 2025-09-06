@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import '../../../../core/constants/color_palette.dart';
+import '../../../../core/utils/backend_api_manager.dart';
 import '../onboarding_controller.dart';
 
 class InterestsSelectorComponent extends StatefulWidget {
@@ -13,17 +14,9 @@ class InterestsSelectorComponent extends StatefulWidget {
 }
 
 class _InterestsSelectorComponentState extends State<InterestsSelectorComponent> {
-  final List<String> _predefinedInterests = [
-    'Tecnologia',
-    'Economia', 
-    'Política',
-    'Esportes',
-    'Entretenimento',
-    'Saúde',
-    'Ciência',
-    'Arte e Cultura',
-  ];
-
+  List<Map<String, dynamic>> _availableTopics = [];
+  bool _isLoadingTopics = true;
+  String? _errorMessage;
   final List<String> _selectedInterests = [];
   final List<TextEditingController> _otherControllers = [];
   final List<FocusNode> _otherFocusNodes = [];
@@ -33,7 +26,48 @@ class _InterestsSelectorComponentState extends State<InterestsSelectorComponent>
     super.initState();
     // Load existing interests from controller
     _selectedInterests.addAll(widget.controller.state.preferences.interests);
+    _loadTopics();
     _addOtherField(); // Start with one "Other" field
+  }
+
+
+  Future<void> _loadTopics() async {
+    try {
+      setState(() {
+        _isLoadingTopics = true;
+        _errorMessage = null;
+      });
+
+      final response = await BackendApiManager.getTopics();
+      final List<dynamic> topics = response['topics'] ?? [];
+      
+      setState(() {
+        _availableTopics = topics.map((topic) => {
+          'id': topic['id'],
+          'name': topic['name'],
+          'icon': topic['icon'] ?? 'account_balance',
+          'primaryColor': topic['primary-color'] ?? '#9C27B0',
+          'secondaryColor': topic['secondary-color'] ?? '#E1BEE7',
+        }).toList();
+        _isLoadingTopics = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Erro ao carregar tópicos: $e';
+        _isLoadingTopics = false;
+        // Fallback to static data in case of error
+        _availableTopics = [
+          {'id': 'tecnologia', 'name': 'Tecnologia', 'icon': 'computer'},
+          {'id': 'economia', 'name': 'Economia', 'icon': 'trending_up'},
+          {'id': 'politica', 'name': 'Política', 'icon': 'account_balance'},
+          {'id': 'esportes', 'name': 'Esportes', 'icon': 'sports_soccer'},
+          {'id': 'entretenimento', 'name': 'Entretenimento', 'icon': 'movie'},
+          {'id': 'saude', 'name': 'Saúde', 'icon': 'favorite'},
+          {'id': 'ciencia', 'name': 'Ciência', 'icon': 'science'},
+          {'id': 'arte-cultura', 'name': 'Arte e Cultura', 'icon': 'palette'},
+        ];
+      });
+    }
   }
 
   @override
@@ -87,32 +121,59 @@ class _InterestsSelectorComponentState extends State<InterestsSelectorComponent>
     });
   }
 
-  void _toggleInterest(String interest) {
+  void _toggleInterest(String topicId) {
     setState(() {
-      if (_selectedInterests.contains(interest)) {
-        _selectedInterests.remove(interest);
+      if (_selectedInterests.contains(topicId)) {
+        _selectedInterests.remove(topicId);
       } else {
-        _selectedInterests.add(interest);
+        _selectedInterests.add(topicId);
       }
     });
     
-    // Update the controller with the new selection
+    // Update the controller with the new selection of ids
     widget.controller.setInterests(_selectedInterests);
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingTopics) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.red.shade50,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red.shade200),
+        ),
+        child: Text(
+          _errorMessage!,
+          style: TextStyle(color: Colors.red.shade700),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
     return Wrap(
       spacing: 12.0,
       runSpacing: 12.0,
       children: [
-        ..._predefinedInterests.map((interest) {
-          final isSelected = _selectedInterests.contains(interest);
+        ..._availableTopics.map((topic) {
+          final topicId = topic['id'].toString();
+          final isSelected = _selectedInterests.contains(topicId);
           return ChoiceChip(
-            label: Text(interest),
+            label: Text(topic['name']),
             selected: isSelected,
             onSelected: (selected) {
-              _toggleInterest(interest);
+              _toggleInterest(topicId);
             },
             selectedColor: AppColors.chipSelected,
             labelStyle: TextStyle(

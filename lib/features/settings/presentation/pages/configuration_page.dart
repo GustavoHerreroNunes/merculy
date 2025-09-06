@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:merculy/features/newsletters/presentation/pages/my_newsletters_screen.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/components/bottom_navigation_component.dart';
@@ -30,26 +31,58 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _currentPasswordController = TextEditingController();
-  
   // User data - will be loaded from API
   String _userName = '';
   String _userEmail = '';
   final String _hiddenPassword = '••••••••••••';
 
+  OnboardingController? _onboardingController;
+  
   @override
   void initState() {
     super.initState();
     _loadUserData();
     print("loaded");
   }
+  @override
+  void didChangeDependencies(){
+    super.didChangeDependencies();
+
+    _onboardingController = context.read<OnboardingController>();
+  }
 
   @override
   void dispose() {
+    // Save interests before disposing
+    _saveInterestsBeforeExitOrNavigate();
     _nameController.dispose();
     _emailController.dispose();
     _newPasswordController.dispose();
     _currentPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveInterestsBeforeExitOrNavigate() async {
+    try {
+      final controller = _onboardingController;
+      if (controller == null) {
+        print('ERROR - Failed to read context onboardingController. \'null\' is not valid.');
+        return;
+      }
+
+      final selectedInterests = controller.state.preferences.interests;
+      
+      // Only save if there are interests to save
+      if (selectedInterests.isNotEmpty) {
+        await BackendApiManager.updateProfile(
+          interests: selectedInterests,
+        );
+        print('DEBUG - Interests saved on exit: $selectedInterests');
+      }
+    } catch (e) {
+      print('ERROR - Failed to save interests on exit: $e');
+      // Don't show error to user on dispose as the widget might be unmounted
+    }
   }
 
   Future<void> _loadUserData() async {
@@ -68,7 +101,9 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
       
       // Extract user data from nested structure
       final userInfo = userData['user'] as Map<String, dynamic>?;
+      final List<dynamic> userInterests = userInfo?['interests'] ?? [];
       print('DEBUG - Extracted user info: $userInfo');
+      print('DEBUG - User interests: $userInterests');
       
       setState(() {
         _userName = userInfo?['name'] ?? '';
@@ -77,6 +112,12 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
         _emailController.text = _userEmail;
         _isLoadingUser = false;
       });
+      
+      // Load user interests into the onboarding controller
+      if (mounted) {
+        final controller = context.read<OnboardingController>();;
+        controller.setInterests(userInterests.map((e) => e.toString()).toList());
+      }
       
       print('DEBUG - Set state with name: $_userName, email: $_userEmail');
     
@@ -547,7 +588,7 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
     });
 
     try {
-      final controller = context.read<OnboardingController>();
+      final controller = context.read<OnboardingController>();;
       final user = controller.user;
       
       if (user == null) {
@@ -609,9 +650,15 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
   }
 
   void _handleNavigation(BottomNavPage page) {
+    // Save interests before navigating away
+    _saveInterestsBeforeExitOrNavigate();
+    
     switch (page) {
       case BottomNavPage.newsletters:
-        Navigator.of(context).pop(); // Go back to newsletters screen
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MyNewslettersScreen(),
+          settings: const RouteSettings(name: '/newsletters'))
+        );
         break;
       case BottomNavPage.saved:
         // TODO: Navigate to saved articles page

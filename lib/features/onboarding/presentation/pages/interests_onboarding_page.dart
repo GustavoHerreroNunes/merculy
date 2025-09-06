@@ -3,6 +3,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/utils/backend_api_manager.dart';
 import '../onboarding_controller.dart';
 
 class InterestsOnboardingPage extends StatefulWidget {
@@ -14,15 +15,9 @@ class InterestsOnboardingPage extends StatefulWidget {
 }
 
 class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
-  final List<String> _predefinedInterests = [
-    'Notícias',
-    'Esportes',
-    'Tecnologia',
-    'Entretenimento',
-    'Finanças',
-    'Saúde',
-  ];
-
+  List<Map<String, dynamic>> _availableTopics = [];
+  bool _isLoadingTopics = true;
+  String? _errorMessage;
   final List<String> _selectedInterests = [];
   final List<TextEditingController> _otherControllers = [];
   final List<FocusNode> _otherFocusNodes = [];
@@ -30,7 +25,45 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
   @override
   void initState() {
     super.initState();
+    _loadTopics();
     _addOtherField();
+  }
+
+  Future<void> _loadTopics() async {
+    try {
+      setState(() {
+        _isLoadingTopics = true;
+        _errorMessage = null;
+      });
+
+      final response = await BackendApiManager.getTopics();
+      final List<dynamic> topics = response['topics'] ?? [];
+      
+      setState(() {
+        _availableTopics = topics.map((topic) => {
+          'id': topic['id'],
+          'name': topic['name'],
+          'icon': topic['icon'] ?? 'account_balance',
+          'primaryColor': topic['primary-color'] ?? '#9C27B0',
+          'secondaryColor': topic['secondary-color'] ?? '#E1BEE7',
+        }).toList();
+        _isLoadingTopics = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Erro ao carregar tópicos: $e';
+        _isLoadingTopics = false;
+        // Fallback to static data in case of error
+        _availableTopics = [
+          {'id': 'noticias', 'name': 'Notícias'},
+          {'id': 'esportes', 'name': 'Esportes'},
+          {'id': 'tecnologia', 'name': 'Tecnologia'},
+          {'id': 'entretenimento', 'name': 'Entretenimento'},
+          {'id': 'financas', 'name': 'Finanças'},
+          {'id': 'saude', 'name': 'Saúde'},
+        ];
+      });
+    }
   }
 
   @override
@@ -84,12 +117,12 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
     });
   }
 
-  void _toggleInterest(String interest) {
+  void _toggleInterest(String topicId) {
     setState(() {
-      if (_selectedInterests.contains(interest)) {
-        _selectedInterests.remove(interest);
+      if (_selectedInterests.contains(topicId)) {
+        _selectedInterests.remove(topicId);
       } else {
-        _selectedInterests.add(interest);
+        _selectedInterests.add(topicId);
       }
     });
     print('Selected interests: $_selectedInterests'); // Debug print
@@ -142,106 +175,130 @@ class _InterestsOnboardingPageState extends State<InterestsOnboardingPage> {
                 ),
               ),
               const SizedBox(height: 32.0),
-              Wrap(
-                spacing: 12.0,
-                runSpacing: 12.0,
-                children: [
-                  ..._predefinedInterests.map((interest) {
-                    final isSelected = _selectedInterests.contains(interest);
-                    return ChoiceChip(
-                      label: Text(interest),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        _toggleInterest(interest);
-                      },
-                      selectedColor: AppColors.chipSelected,
-                      labelStyle: TextStyle(
-                        color: isSelected ? AppColors.chipTextSelected : AppColors.chipTextUnselected,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        side: BorderSide(
-                          color: isSelected ? AppColors.chipSelected : AppColors.chipUnselected,
-                          width: 1.5,
-                        ),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-                    );
-                  }).toList(),
-                  ..._otherControllers.asMap().entries.map((entry) {
-                    int index = entry.key;
-                    TextEditingController controller = entry.value;
-                    FocusNode focusNode = _otherFocusNodes[index];
-                    final hasText = controller.text.isNotEmpty;
-
-                    return SizedBox(
-                      width: 120, // Set a specific width to match chip size
-                      height: 60, // Match the height of ChoiceChip more closely
-                      child: TextField(
-                        controller: controller,
-                        focusNode: focusNode,
-                        style: TextStyle(
-                          color: hasText ? AppColors.chipTextSelected : AppColors.chipTextUnselected,
+              if (_errorMessage != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(color: Colors.red.shade700),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              if (_isLoadingTopics)
+                const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  ),
+                )
+              else
+                Wrap(
+                  spacing: 12.0,
+                  runSpacing: 12.0,
+                  children: [
+                    ..._availableTopics.map((topic) {
+                      final topicId = topic['id'].toString();
+                      final isSelected = _selectedInterests.contains(topicId);
+                      return ChoiceChip(
+                        label: Text(topic['name']),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          _toggleInterest(topicId);
+                        },
+                        selectedColor: AppColors.chipSelected,
+                        labelStyle: TextStyle(
+                          color: isSelected ? AppColors.chipTextSelected : AppColors.chipTextUnselected,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14, // Match chip text size
                         ),
-                        decoration: InputDecoration(
-                          hintText: 'Outros...',
-                          hintStyle: const TextStyle(
-                            color: AppColors.chipTextUnselected,
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          side: BorderSide(
+                            color: isSelected ? AppColors.chipSelected : AppColors.chipUnselected,
+                            width: 1.5,
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                      );
+                    }).toList(),
+                    ..._otherControllers.asMap().entries.map((entry) {
+                      int index = entry.key;
+                      TextEditingController controller = entry.value;
+                      FocusNode focusNode = _otherFocusNodes[index];
+                      final hasText = controller.text.isNotEmpty;
+
+                      return SizedBox(
+                        width: 120, // Set a specific width to match chip size
+                        height: 60, // Match the height of ChoiceChip more closely
+                        child: TextField(
+                          controller: controller,
+                          focusNode: focusNode,
+                          style: TextStyle(
+                            color: hasText ? AppColors.chipTextSelected : AppColors.chipTextUnselected,
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 14, // Match chip text size
                           ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: const BorderSide(
-                              color: AppColors.chipUnselected,
-                              width: 1.5,
+                          decoration: InputDecoration(
+                            hintText: 'Outros...',
+                            hintStyle: const TextStyle(
+                              color: AppColors.chipTextUnselected,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
                             ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: BorderSide(
-                              color: hasText ? AppColors.chipSelected : AppColors.chipUnselected,
-                              width: 1.5,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: const BorderSide(
+                                color: AppColors.chipUnselected,
+                                width: 1.5,
+                              ),
                             ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            borderSide: const BorderSide(
-                              color: AppColors.chipSelected,
-                              width: 1.5,
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide(
+                                color: hasText ? AppColors.chipSelected : AppColors.chipUnselected,
+                                width: 1.5,
+                              ),
                             ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: const BorderSide(
+                                color: AppColors.chipSelected,
+                                width: 1.5,
+                              ),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
+                            filled: true,
+                            fillColor: hasText ? AppColors.chipSelected : Colors.white,
+                            isDense: true, // Makes the field more compact
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 14.0),
-                          filled: true,
-                          fillColor: hasText ? AppColors.chipSelected : Colors.white,
-                          isDense: true, // Makes the field more compact
+                          onTap: () {},
+                          onChanged: (text) {
+                            setState(() {
+                              // Remove the old text from interests if it was there
+                              _selectedInterests.removeWhere((interest) => 
+                                  _otherControllers.any((ctrl) => ctrl.text.isEmpty && interest == ctrl.text));
+                              
+                              // Add the new text if it's not empty and not already selected
+                              if (text.isNotEmpty && !_selectedInterests.contains(text)) {
+                                _selectedInterests.add(text);
+                              }
+                            });
+                            print('TextField changed: "$text", Selected interests: $_selectedInterests'); // Debug
+                          },
+                          onEditingComplete: () {
+                            focusNode.unfocus();
+                          },
                         ),
-                        onTap: () {},
-                        onChanged: (text) {
-                          setState(() {
-                            // Remove the old text from interests if it was there
-                            _selectedInterests.removeWhere((interest) => 
-                                _otherControllers.any((ctrl) => ctrl.text.isEmpty && interest == ctrl.text));
-                            
-                            // Add the new text if it's not empty and not already selected
-                            if (text.isNotEmpty && !_selectedInterests.contains(text)) {
-                              _selectedInterests.add(text);
-                            }
-                          });
-                          print('TextField changed: "$text", Selected interests: $_selectedInterests'); // Debug
-                        },
-                        onEditingComplete: () {
-                          focusNode.unfocus();
-                        },
-                      ),
-                    );
-                  }).toList(),
-                ],
-              ),
+                      );
+                    }).toList(),
+                  ],
+                ),
               const SizedBox(height: 32.0),
               Column(
                 children: [

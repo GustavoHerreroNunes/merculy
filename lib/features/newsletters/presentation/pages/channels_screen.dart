@@ -105,7 +105,6 @@ class _ChannelsScreenState extends State<ChannelsScreen> {
       }
     });
     
-    // TODO: Implement saving changes to backend
     _saveFollowedChannels();
   }
 
