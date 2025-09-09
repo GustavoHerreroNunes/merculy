@@ -78,6 +78,52 @@ class NewsletterService {
     }
   }
 
+  /// Get newsletters by topic
+  static Future<List<Newsletter>> getNewslettersByTopic(String topicId) async {
+    try {
+      // Get all newsletters and filter by topic
+      final allNewsletters = await getNewsletters(saved: false);
+      
+      // Filter newsletters by topic (for now we'll get all since the backend doesn't have topic filtering yet)
+      // In the future, this should be a separate API call
+      return allNewsletters.where((newsletter) {
+        // This is a placeholder - we'd need backend support for topic filtering
+        // For now, return all newsletters
+        return true;
+      }).toList();
+    } catch (e) {
+      throw Exception('Failed to load newsletters for topic $topicId: $e');
+    }
+  }
+
+  /// Get user topics/interests
+  static Future<List<Topic>> getUserTopics() async {
+    try {
+      // First load all available topics
+      await _loadTopics();
+      
+      // Get current user information to see their interests
+      final userInfo = await BackendApiManager.getCurrentUser();
+      final userInterests = userInfo['user']?['interests'] as List<dynamic>? ?? [];
+      
+      // Convert interest strings to topic IDs and get corresponding topics
+      List<Topic> userTopics = [];
+      
+      for (String interest in userInterests.cast<String>()) {
+        final topic = _topicsCache[interest];
+        if (topic != null && topic.isActive) {
+          userTopics.add(topic);
+        }
+      }
+      
+      return userTopics;
+    } catch (e) {
+      print('DEBUG - Error loading user topics: $e');
+      // Return empty list if we can't load user topics
+      return [];
+    }
+  }
+
   /// Load topics from backend with caching
   static Future<void> _loadTopics() async {
     // Check if cache is still valid

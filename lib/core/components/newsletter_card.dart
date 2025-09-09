@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/color_palette.dart';
+import '../constants/color_palette.dart';
 import '../../features/newsletters/domain/entities/newsletter.dart';
 
 class NewsletterCard extends StatelessWidget {
@@ -21,14 +21,15 @@ class NewsletterCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        height: 100, // Smaller height
+        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
+              blurRadius: 6,
               offset: const Offset(0, 2),
             ),
           ],
@@ -36,28 +37,11 @@ class NewsletterCard extends StatelessWidget {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16), // Smaller padding
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Icon container
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: newsletter.primaryColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      newsletter.icon,
-                      color: newsletter.primaryColor,
-                      size: 28,
-                    ),
-                  ),
-                  
-                  const SizedBox(width: 16),
-                  
-                  // Content
+                  // Content (no icon)
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,18 +49,20 @@ class NewsletterCard extends StatelessWidget {
                         Text(
                           newsletter.title,
                           style: const TextStyle(
-                            fontSize: 18,
+                            fontSize: 16, // Smaller font size
                             fontWeight: FontWeight.bold,
                             color: AppColors.textDark,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 6),
                         Text(
                           newsletter.description,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 12, // Smaller font size
                             color: AppColors.textMedium,
-                            height: 1.4,
+                            height: 1.3,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
@@ -91,11 +77,11 @@ class NewsletterCard extends StatelessWidget {
             // Notification dot
             if (newsletter.hasNewData)
               Positioned(
-                top: 16,
-                right: 16,
+                top: 0,
+                right: 0,
                 child: Container(
-                  width: 12,
-                  height: 12,
+                  width: 10,
+                  height: 10,
                   decoration: const BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
@@ -106,27 +92,27 @@ class NewsletterCard extends StatelessWidget {
             // Save button
             if (onSave != null)
               Positioned(
-                top: 12,
-                right: newsletter.hasNewData ? 40 : 12,
+                top: 8,
+                right: 8,
                 child: GestureDetector(
                   onTap: onSave,
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                          blurRadius: 3,
+                          offset: const Offset(0, 1),
                         ),
                       ],
                     ),
                     child: Icon(
                       isSaved ? Icons.bookmark : Icons.bookmark_border,
-                      color: isSaved ? AppColors.primary : AppColors.textMedium,
-                      size: 20,
+                      color: isSaved ? newsletter.primaryColor : AppColors.textMedium,
+                      size: 16,
                     ),
                   ),
                 ),
