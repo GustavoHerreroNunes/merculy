@@ -8,6 +8,7 @@ class BackendNewsletter {
   final int articleCount;
   final List<String> articles;
   final DateTime createdAt;
+  final bool saved;
 
   BackendNewsletter({
     required this.id,
@@ -17,6 +18,7 @@ class BackendNewsletter {
     required this.articleCount,
     required this.articles,
     required this.createdAt,
+    required this.saved,
   });
 
   factory BackendNewsletter.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class BackendNewsletter {
       articles: (json['articles'] as List<dynamic>?)
           ?.map((e) => e.toString())
           .toList() ?? [],
+      saved: json['saved'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
@@ -42,6 +45,7 @@ class BackendNewsletter {
       'article_count': articleCount,
       'articles': articles,
       'created_at': createdAt.toIso8601String(),
+      'saved': saved
     };
   }
 }

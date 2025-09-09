@@ -9,6 +9,7 @@ class Newsletter {
   final IconData icon;
   final DateTime date;
   final bool hasNewData;
+  final bool saved;
   final List<NewsHeadline> headlines;
   final Color primaryColor;
   final Color secondaryColor;
@@ -20,6 +21,7 @@ class Newsletter {
     required this.icon,
     required this.date,
     this.hasNewData = false,
+    this.saved = false,
     required this.headlines,
     required this.primaryColor,
     required this.secondaryColor,
@@ -39,6 +41,7 @@ class Newsletter {
       icon: IconData(json['iconCodePoint'] as int, fontFamily: 'MaterialIcons'),
       date: DateTime.parse(json['date'] as String),
       hasNewData: json['hasNewData'] as bool? ?? false,
+      saved: json['saved'] as bool? ?? false,
       headlines: (json['headlines'] as List<dynamic>)
           .map((headline) => NewsHeadline.fromJson(headline as Map<String, dynamic>))
           .toList(),
@@ -55,6 +58,7 @@ class Newsletter {
       'iconCodePoint': icon.codePoint,
       'date': date.toIso8601String(),
       'hasNewData': hasNewData,
+      'saved': saved,
       'headlines': headlines.map((headline) => headline.toJson()).toList(),
       'primaryColor': primaryColor.toARGB32(),
       'secondaryColor': secondaryColor.toARGB32(),

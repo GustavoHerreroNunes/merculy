@@ -348,9 +348,11 @@ class BackendApiManager {
   }
 
   // Get all user's newsletters
-  static Future<Map<String, dynamic>> getNewsletters() async {
+  static Future<Map<String, dynamic>> getNewsletters({
+    bool saved = false
+  }) async {
     try {
-      final url = Uri.parse('$baseUrl/api/newsletters');
+      final url = Uri.parse('$baseUrl/api/newsletters?saved=$saved');
       
       final headers = <String, String>{
         ...baseHeaders,
@@ -410,6 +412,28 @@ class BackendApiManager {
       }
     } catch (e) {
       throw Exception('Error getting sources: $e');
+    }
+  }
+
+  // Toggle save status for a newsletter
+  static Future<Map<String, dynamic>> toggleNewsletterSave(String newsletterId) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/newsletters/$newsletterId/toggle-save');
+      
+      final headers = <String, String>{
+        ...baseHeaders,
+        ...TokenManager.getAuthHeaders(),
+      };
+
+      final response = await http.post(url, headers: headers);
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to toggle newsletter save: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error toggling newsletter save: $e');
     }
   }
 }

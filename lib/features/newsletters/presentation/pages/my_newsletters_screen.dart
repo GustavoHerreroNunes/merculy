@@ -35,7 +35,7 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
     });
 
     try {
-      final newsletters = await NewsletterService.getNewsletters();
+      final newsletters = await NewsletterService.getNewsletters(saved: false);
       setState(() {
         _newsletters = newsletters;
         _isLoading = false;
@@ -81,6 +81,49 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
       setState(() {
         _isGenerating = false;
       });
+    }
+  }
+
+  Future<void> _toggleSaveNewsletter(Newsletter newsletter, int index) async {
+    try {
+      final newSavedStatus = await NewsletterService.toggleNewsletterSave(newsletter.id);
+      
+      setState(() {
+        // Update the newsletter in the list with the new saved status
+        _newsletters[index] = Newsletter(
+          id: newsletter.id,
+          title: newsletter.title,
+          description: newsletter.description,
+          icon: newsletter.icon,
+          date: newsletter.date,
+          hasNewData: newsletter.hasNewData,
+          saved: newSavedStatus,
+          headlines: newsletter.headlines,
+          primaryColor: newsletter.primaryColor,
+          secondaryColor: newsletter.secondaryColor,
+        );
+      });
+
+      // Show feedback to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(newSavedStatus ? 'Newsletter salva!' : 'Newsletter removida dos salvos'),
+            backgroundColor: AppColors.primary,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao salvar newsletter: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -273,7 +316,9 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
           final newsletter = _newsletters[index];
           return NewsletterCard(
             newsletter: newsletter,
+            isSaved: newsletter.saved,
             onTap: () => _navigateToNewsletter(newsletter),
+            onSave: () => _toggleSaveNewsletter(newsletter, index),
           );
         },
       ),

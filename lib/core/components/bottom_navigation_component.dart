@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:merculy/features/newsletters/presentation/pages/channels_screen.dart';
 import 'package:merculy/features/newsletters/presentation/pages/my_newsletters_screen.dart';
+import 'package:merculy/features/newsletters/presentation/pages/saved_screen.dart';
 import 'package:merculy/features/settings/presentation/pages/configuration_page.dart';
 import '../../../core/constants/color_palette.dart';
 import '../navigation/navigation_controller.dart';
@@ -41,9 +42,12 @@ class BottomNavigationComponent extends StatelessWidget {
         }
         break;
       case 1:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Página de salvos em desenvolvimento')),
-        );
+        if(_getCurrentIndex(context) != 1){
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const SavedScreen(),
+            settings: const RouteSettings(name: '/saved'))
+          );
+        }
         // onPageChanged(BottomNavPage.saved);
         break;
       case 2:

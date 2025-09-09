@@ -5,11 +5,15 @@ import '../../features/newsletters/domain/entities/newsletter.dart';
 class NewsletterCard extends StatelessWidget {
   final Newsletter newsletter;
   final VoidCallback onTap;
+  final VoidCallback? onSave;
+  final bool isSaved;
 
   const NewsletterCard({
     super.key,
     required this.newsletter,
     required this.onTap,
+    this.onSave,
+    this.isSaved = false,
   });
 
   @override
@@ -95,6 +99,35 @@ class NewsletterCard extends StatelessWidget {
                   decoration: const BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            
+            // Save button
+            if (onSave != null)
+              Positioned(
+                top: 12,
+                right: newsletter.hasNewData ? 40 : 12,
+                child: GestureDetector(
+                  onTap: onSave,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      isSaved ? Icons.bookmark : Icons.bookmark_border,
+                      color: isSaved ? AppColors.primary : AppColors.textMedium,
+                      size: 20,
+                    ),
                   ),
                 ),
               ),

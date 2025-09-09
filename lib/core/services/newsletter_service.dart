@@ -22,13 +22,15 @@ class NewsletterService {
   }
 
   /// Get all newsletters for the current user
-  static Future<List<Newsletter>> getNewsletters() async {
+  static Future<List<Newsletter>> getNewsletters({
+    bool saved = false
+  }) async {
     try {
       // Get topics first (with caching)
       await _loadTopics();
       
       // Get newsletters from backend
-      final response = await BackendApiManager.getNewsletters();
+      final response = await BackendApiManager.getNewsletters(saved: saved);
       print('DEBUG - Newsletter API response: $response'); // Debug log
       final newslettersData = response['newsletters'] as List<dynamic>?;
       
@@ -134,6 +136,7 @@ class NewsletterService {
       headlines: headlines,
       primaryColor: topicInfo.primaryColor,
       secondaryColor: topicInfo.secondaryColor,
+      saved: backendNewsletter.saved
     );
   }
 
@@ -248,5 +251,17 @@ class NewsletterService {
   static void clearTopicsCache() {
     _topicsCache.clear();
     _topicsCacheTime = null;
+  }
+
+  /// Toggle save status for a newsletter
+  static Future<bool> toggleNewsletterSave(String newsletterId) async {
+    try {
+      final response = await BackendApiManager.toggleNewsletterSave(newsletterId);
+      
+      // Return the new saved status from the API response
+      return response['saved'] as bool? ?? false;
+    } catch (e) {
+      rethrow;
+    }
   }
 }
