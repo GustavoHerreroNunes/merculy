@@ -72,6 +72,7 @@ class _TopicNewslettersScreenState extends State<TopicNewslettersScreen> {
           headlines: newsletter.headlines,
           primaryColor: newsletter.primaryColor,
           secondaryColor: newsletter.secondaryColor,
+          topic: newsletter.topic
         );
       });
 

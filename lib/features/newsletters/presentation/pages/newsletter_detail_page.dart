@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/services/web_image_cache_service.dart';
+import '../../../../core/services/newsletter_service.dart';
 import '../../../../core/components/web_smart_network_image.dart';
 import '../../domain/entities/newsletter.dart';
 import '../../domain/entities/news_headline.dart';
@@ -20,25 +21,65 @@ class NewsletterDetailPage extends StatefulWidget {
 }
 
 class _NewsletterDetailPageState extends State<NewsletterDetailPage> {
+  List<NewsHeadline> _articles = [];
+  bool _isLoadingArticles = false;
+  String? _error;
+
   @override
   void initState() {
     super.initState();
     print('📰 NewsletterDetailPage: Opening newsletter: ${widget.newsletter.title}');
     _cleanupImageCache();
-    _debugNewsletterImages();
+    _loadArticles();
+  }
+
+  /// Load articles for this newsletter
+  Future<void> _loadArticles() async {
+    // If newsletter already has headlines, use them
+    if (widget.newsletter.headlines.isNotEmpty) {
+      setState(() {
+        _articles = widget.newsletter.headlines;
+      });
+      _debugNewsletterImages();
+      return;
+    }
+
+    // Otherwise, load articles from API
+    setState(() {
+      _isLoadingArticles = true;
+      _error = null;
+    });
+
+    try {
+      final articles = await NewsletterService.getNewsletterArticles(widget.newsletter.id);
+      setState(() {
+        _articles = articles;
+        _isLoadingArticles = false;
+      });
+      _debugNewsletterImages();
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoadingArticles = false;
+      });
+      print('💥 NewsletterDetailPage: Failed to load articles: $e');
+    }
   }
 
   /// Debug newsletter images
   void _debugNewsletterImages() {
+    final mainNews = _articles.take(3).toList();
+    final otherNews = _articles.skip(3).toList();
+    
     print('🖼️ NewsletterDetailPage: Main news images:');
-    for (int i = 0; i < widget.newsletter.mainNews.length; i++) {
-      final headline = widget.newsletter.mainNews[i];
+    for (int i = 0; i < mainNews.length; i++) {
+      final headline = mainNews[i];
       print('   [$i] ${headline.title}: ${headline.coverImage ?? "NO IMAGE"}');
     }
     
     print('🖼️ NewsletterDetailPage: Other news images:');
-    for (int i = 0; i < widget.newsletter.otherNews.length; i++) {
-      final headline = widget.newsletter.otherNews[i];
+    for (int i = 0; i < otherNews.length; i++) {
+      final headline = otherNews[i];
       print('   [$i] ${headline.title}: ${headline.coverImage ?? "NO IMAGE"}');
     }
   }
@@ -147,21 +188,118 @@ class _NewsletterDetailPageState extends State<NewsletterDetailPage> {
               padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [                 
-                  // Main News Section
-                  if (widget.newsletter.mainNews.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    _buildMainNewsSection(context),
-                    const SizedBox(height: 32),
+                children: [
+                  // Loading state
+                  if (_isLoadingArticles) ...[
+                    const SizedBox(height: 40),
+                    const Center(
+                      child: Column(
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                            'Carregando artigos...',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textMedium,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ]
+                  // Error state
+                  else if (_error != null) ...[
+                    const SizedBox(height: 40),
+                    Center(
+                      child: Column(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            size: 48,
+                            color: Colors.red,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Erro ao carregar artigos',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.textDark,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textMedium,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: _loadArticles,
+                            child: const Text('Tentar Novamente'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                  ]
+                  // Content with articles
+                  else ...[              
+                    // Main News Section
+                    if (_articles.take(3).isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _buildMainNewsSection(context),
+                      const SizedBox(height: 32),
+                    ],
+                    
+                    // Other News Section
+                    if (_articles.skip(3).isNotEmpty) ...[
+                      _buildOtherNewsSection(context),
+                      const SizedBox(height: 32),
+                    ],
+                    
+                    // Empty state
+                    if (_articles.isEmpty) ...[
+                      const SizedBox(height: 40),
+                      const Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.article_outlined,
+                              size: 48,
+                              color: AppColors.textMedium,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Nenhum artigo encontrado',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.textDark,
+                              ),
+                            ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Esta newsletter não possui artigos disponíveis.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: AppColors.textMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
                   ],
                   
-                  // Other News Section
-                  if (widget.newsletter.otherNews.isNotEmpty) ...[
-                                        _buildOtherNewsSection(context),
-                    const SizedBox(height: 32),
-                  ],
-                  
-                  // Share Button
+                  // Share Button (always visible)
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -190,6 +328,7 @@ class _NewsletterDetailPageState extends State<NewsletterDetailPage> {
   }
 
   Widget _buildMainNewsSection(BuildContext context) {
+    final mainNews = _articles.take(3).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -202,7 +341,7 @@ class _NewsletterDetailPageState extends State<NewsletterDetailPage> {
           ),
         ),
         const SizedBox(height: 16),
-        ...widget.newsletter.mainNews.map((headline) => _buildMainNewsCard(context, headline)),
+        ...mainNews.map((headline) => _buildMainNewsCard(context, headline)),
       ],
     );
   }
@@ -456,6 +595,7 @@ class _NewsletterDetailPageState extends State<NewsletterDetailPage> {
   }
 
   Widget _buildOtherNewsSection(BuildContext context) {
+    final otherNews = _articles.skip(3).toList();
     return Container(
       width: double.infinity, // 100% width
       color: Colors.white, // No border radius
@@ -488,7 +628,7 @@ class _NewsletterDetailPageState extends State<NewsletterDetailPage> {
             ),
           ),
           const SizedBox(height: 16),
-          ...widget.newsletter.otherNews.map((headline) => _buildOtherNewsCard(context, headline)),
+          ...otherNews.map((headline) => _buildOtherNewsCard(context, headline)),
         ],
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../utils/backend_api_manager.dart';
 import '../constants/color_palette.dart';
 import '../../features/newsletters/domain/entities/newsletter.dart';
@@ -23,14 +24,15 @@ class NewsletterService {
 
   /// Get all newsletters for the current user
   static Future<List<Newsletter>> getNewsletters({
-    bool saved = false
+    bool saved = false,
+    String topic = ''
   }) async {
     try {
       // Get topics first (with caching)
       await _loadTopics();
       
-      // Get newsletters from backend
-      final response = await BackendApiManager.getNewsletters(saved: saved);
+      // Get newsletters from backend (now only returns newsletter metadata)
+      final response = await BackendApiManager.getNewsletters(saved: saved, topic: topic);
       print('DEBUG - Newsletter API response: $response'); // Debug log
       final newslettersData = response['newsletters'] as List<dynamic>?;
       
@@ -41,27 +43,15 @@ class NewsletterService {
 
       List<Newsletter> newsletters = [];
       
-        for (var newsletterData in newslettersData) {
+      for (var newsletterData in newslettersData) {
         try {
           print('DEBUG - Processing newsletter: $newsletterData'); // Debug log
-          final newsletterResponse = NewsletterResponse.fromJson(newsletterData);
           
-          // Debug articles in this newsletter
-          print('DEBUG - Newsletter has ${newsletterResponse.articles.length} articles');
-          for (int i = 0; i < newsletterResponse.articles.take(3).length; i++) {
-            final article = newsletterResponse.articles[i];
-            print('DEBUG - Article $i: "${article.title}"');
-            print('DEBUG - Article $i imageUrl: "${article.imageUrl}"');
-          }
+          // Create backend newsletter from the simplified response
+          final backendNewsletter = BackendNewsletter.fromJson(newsletterData);
           
-          // Debug raw article data from backend
-          final articlesRawData = newsletterData['articles'] as List<dynamic>?;
-          if (articlesRawData != null && articlesRawData.isNotEmpty) {
-            print('DEBUG - Raw article 0 data: ${articlesRawData[0]}');
-            print('DEBUG - Raw article 0 image_url field: ${articlesRawData[0]['image_url']}');
-          }
-          
-          final newsletter = _convertToFrontendNewsletter(newsletterResponse);
+          // For now, create newsletters without articles (articles will be loaded when needed)
+          final newsletter = _convertToFrontendNewsletterWithoutArticles(backendNewsletter);
           print('DEBUG - Converted newsletter: ${newsletter.title}, Color: ${newsletter.primaryColor}'); // Debug log
           newsletters.add(newsletter);
         } catch (e) {
@@ -81,8 +71,9 @@ class NewsletterService {
   /// Get newsletters by topic
   static Future<List<Newsletter>> getNewslettersByTopic(String topicId) async {
     try {
+      print('[DEBUG] Seeking news for $topicId');
       // Get all newsletters and filter by topic
-      final allNewsletters = await getNewsletters(saved: false);
+      final allNewsletters = await getNewsletters(saved: false, topic: topicId);
       
       // Filter newsletters by topic (for now we'll get all since the backend doesn't have topic filtering yet)
       // In the future, this should be a separate API call
@@ -124,6 +115,57 @@ class NewsletterService {
     }
   }
 
+  /// Get topics with their newsletter counts
+  static Future<List<Topic>> getTopicsWithCounts() async {
+    try {
+      // First load all available topics
+      await _loadTopics();
+      
+      // Get topics count from backend
+      final response = await BackendApiManager.getNewsletterTopicsCount();
+      final topicsCountData = response['topics_count'] as List<dynamic>?;
+      
+      if (topicsCountData == null) {
+        return [];
+      }
+
+      List<Topic> topicsWithCounts = [];
+      
+      for (var topicCountData in topicsCountData) {
+        final topicId = topicCountData['topic'] as String;
+        final count = topicCountData['count'] as int;
+        
+        // Get topic info from cache or create default
+        Topic topic = _topicsCache[topicId] ?? Topic(
+          id: topicId,
+          name: _formatTopicName(topicId),
+          icon: 'topic',
+          primaryColor: const Color(0xFF6366F1),
+          secondaryColor: const Color(0xFFE0E7FF),
+          isActive: true,
+        );
+        
+        // Create a new topic with the count
+        final topicWithCount = Topic(
+          id: topic.id,
+          name: topic.name,
+          icon: topic.icon,
+          primaryColor: topic.primaryColor,
+          secondaryColor: topic.secondaryColor,
+          isActive: topic.isActive,
+          count: count,
+        );
+        
+        topicsWithCounts.add(topicWithCount);
+      }
+      
+      return topicsWithCounts;
+    } catch (e) {
+      print('DEBUG - Error loading topics with counts: $e');
+      throw Exception('Failed to load topics with counts: $e');
+    }
+  }
+
   /// Load topics from backend with caching
   static Future<void> _loadTopics() async {
     // Check if cache is still valid
@@ -156,34 +198,48 @@ class NewsletterService {
     }
   }
 
-  /// Convert backend newsletter response to frontend Newsletter model
-  static Newsletter _convertToFrontendNewsletter(NewsletterResponse response) {
-    final backendNewsletter = response.newsletter;
-    final articles = response.articles;
-    
+  /// Convert backend newsletter to frontend Newsletter model without articles
+  /// Articles will be loaded separately when needed
+  static Newsletter _convertToFrontendNewsletterWithoutArticles(BackendNewsletter backendNewsletter) {
     // Get topic info or use fallback
     final topicInfo = _getTopicInfo(backendNewsletter.topic);
     
-    // Convert articles to NewsHeadlines
-    final headlines = articles.map((article) => _convertToNewsHeadline(article)).toList();
-    
-    // Determine if there are new articles (created in the last 24 hours)
-    final hasNewData = articles.any((article) => 
-      DateTime.now().difference(article.createdAt).inHours < 24
-    );
+    // For now, assume new data if created in the last 24 hours
+    final hasNewData = DateTime.now().difference(backendNewsletter.createdAt).inHours < 24;
 
     return Newsletter(
       id: backendNewsletter.id,
       title: backendNewsletter.title,
-      description: _generateDescription(backendNewsletter.topic, articles.length),
+      description: _generateDescription(backendNewsletter.topic, backendNewsletter.articleCount),
       icon: topicInfo.iconData,
       date: backendNewsletter.createdAt,
       hasNewData: hasNewData,
-      headlines: headlines,
+      headlines: [], // Empty for now, will be loaded when needed
       primaryColor: topicInfo.primaryColor,
       secondaryColor: topicInfo.secondaryColor,
-      saved: backendNewsletter.saved
+      saved: backendNewsletter.saved,
+      topic: backendNewsletter.topic
     );
+  }
+
+  /// Get newsletter articles separately
+  static Future<List<NewsHeadline>> getNewsletterArticles(String newsletterId) async {
+    try {
+      final response = await BackendApiManager.getNewsletterArticles(newsletterId);
+      final articlesData = response['articles'] as List<dynamic>?;
+      
+      if (articlesData == null) {
+        return [];
+      }
+
+      return articlesData
+          .map((articleData) => Article.fromJson(articleData as Map<String, dynamic>))
+          .map((article) => _convertToNewsHeadline(article))
+          .toList();
+    } catch (e) {
+      print('DEBUG - Error loading newsletter articles: $e');
+      throw Exception('Failed to load newsletter articles: $e');
+    }
   }
 
   /// Get topic information with fallback

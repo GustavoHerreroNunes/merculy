@@ -33,7 +33,7 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
     });
 
     try {
-      final topics = await NewsletterService.getUserTopics();
+      final topics = await NewsletterService.getTopicsWithCounts();
       setState(() {
         _userTopics = topics;
         _isLoading = false;
@@ -235,29 +235,59 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
     
     // Add user topic cards
     for (var topic in _userTopics) {
-      topicCards.add(
-        NewsTopicCard(
-          topic: topic.name,
-          icon: topic.iconData,
-          primaryColor: topic.primaryColor,
-          secondaryColor: topic.secondaryColor,
-          newsletterCount: 0, // TODO: Get actual count
-          onTap: () => _navigateToTopic(topic),
-        ),
-      );
+      if(topic.id != "personalizada"){
+        topicCards.add(
+          NewsTopicCard(
+            topic: topic.name,
+            icon: topic.iconData,
+            primaryColor: topic.primaryColor,
+            secondaryColor: topic.secondaryColor,
+            newsletterCount: topic.count,
+            onTap: () => _navigateToTopic(topic),
+          ),
+        );
+      }else{
+        topicCards.add(
+          NewsTopicCard(
+            topic: 'Personalizadas',
+            icon: Icons.auto_awesome,
+            primaryColor: AppColors.primary,
+            secondaryColor: AppColors.primary.withOpacity(0.1),
+            newsletterCount: topic.count,
+            onTap: () => _navigateToCustomizedNewsletters(),
+          ),
+        );
+      }
+      
     }
     
-    // Add customized newsletters topic (always present)
-    topicCards.add(
-      NewsTopicCard(
-        topic: 'Personalizadas',
-        icon: Icons.auto_awesome,
-        primaryColor: AppColors.primary,
-        secondaryColor: AppColors.primary.withOpacity(0.1),
-        newsletterCount: 0, // TODO: Get actual count
-        onTap: () => _navigateToCustomizedNewsletters(),
-      ),
-    );
+    // // Add customized newsletters topic if there are any personalized newsletters
+    // final personalizedTopic = _userTopics.firstWhere(
+    //   (topic) => topic.id == 'personalizada',
+    //   orElse: () => Topic(
+    //     id: 'personalizada',
+    //     name: 'Personalizadas',
+    //     icon: 'auto_awesome',
+    //     primaryColor: AppColors.primary,
+    //     secondaryColor: AppColors.primary.withOpacity(0.1),
+    //     isActive: true,
+    //     count: 0,
+    //   ),
+    // );
+    
+    // // Only show personalized if we found it in the response or if we have no other topics
+    // if (_userTopics.any((topic) => topic.id == 'personalizada') || _userTopics.isEmpty) {
+    //   topicCards.add(
+    //     NewsTopicCard(
+    //       topic: 'Personalizadas',
+    //       icon: Icons.auto_awesome,
+    //       primaryColor: AppColors.primary,
+    //       secondaryColor: AppColors.primary.withOpacity(0.1),
+    //       newsletterCount: personalizedTopic.count,
+    //       onTap: () => _navigateToCustomizedNewsletters(),
+    //     ),
+    //   );
+    // }
 
     if (topicCards.isEmpty) {
       return Center(
@@ -305,6 +335,8 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
   }
 
   void _navigateToTopic(Topic topic) {
+    print('[DEBUG] Navigating to ${topic.id}');
+    
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => TopicNewslettersScreen(

@@ -83,6 +83,7 @@ class _SavedScreenState extends State<SavedScreen> {
             headlines: newsletter.headlines,
             primaryColor: newsletter.primaryColor,
             secondaryColor: newsletter.secondaryColor,
+            topic: newsletter.topic
           );
         });
       }

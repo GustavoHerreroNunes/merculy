@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../services/token_manager.dart';
 
-const String baseUrl = 'https://d1q3s3lne7ucem.cloudfront.net';
+const String baseUrl = 'http://127.0.0.1:8000';
 const Map<String, String> baseHeaders = {'Content-Type': 'application/json; charset=utf-8'};
 
 class BackendApiManager {
@@ -349,10 +349,11 @@ class BackendApiManager {
 
   // Get all user's newsletters
   static Future<Map<String, dynamic>> getNewsletters({
-    bool saved = false
+    bool saved = false,
+    String topic = ''
   }) async {
     try {
-      final url = Uri.parse('$baseUrl/api/newsletters?saved=$saved');
+      final url = Uri.parse('$baseUrl/api/newsletters?saved=$saved&topic=$topic');
       
       final headers = <String, String>{
         ...baseHeaders,
@@ -368,6 +369,28 @@ class BackendApiManager {
       }
     } catch (e) {
       throw Exception('Error getting newsletters: $e');
+    }
+  }
+
+  // Get articles for a specific newsletter
+  static Future<Map<String, dynamic>> getNewsletterArticles(String newsletterId) async {
+    try {
+      final url = Uri.parse('$baseUrl/api/newsletters/$newsletterId');
+      
+      final headers = <String, String>{
+        ...baseHeaders,
+        ...TokenManager.getAuthHeaders(),
+      };
+
+      final response = await http.get(url, headers: headers);
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get newsletter articles: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error getting newsletter articles: $e');
     }
   }
 
@@ -390,6 +413,28 @@ class BackendApiManager {
       }
     } catch (e) {
       throw Exception('Error getting topics: $e');
+    }
+  }
+
+  // Get newsletter topics count
+  static Future<Map<String, dynamic>> getNewsletterTopicsCount() async {
+    try {
+      final url = Uri.parse('$baseUrl/api/newsletters/topics-count');
+      
+      final headers = <String, String>{
+        ...baseHeaders,
+        ...TokenManager.getAuthHeaders(),
+      };
+
+      final response = await http.get(url, headers: headers);
+      
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get newsletter topics count: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error getting newsletter topics count: $e');
     }
   }
 

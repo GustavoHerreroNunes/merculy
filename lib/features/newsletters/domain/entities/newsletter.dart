@@ -13,6 +13,7 @@ class Newsletter {
   final List<NewsHeadline> headlines;
   final Color primaryColor;
   final Color secondaryColor;
+  final String topic;
 
   Newsletter({
     required this.id,
@@ -25,6 +26,7 @@ class Newsletter {
     required this.headlines,
     required this.primaryColor,
     required this.secondaryColor,
+    required this.topic
   });
 
   List<NewsHeadline> get mainNews => 
@@ -47,6 +49,7 @@ class Newsletter {
           .toList(),
       primaryColor: Color(json['primaryColor'] as int),
       secondaryColor: Color(json['secondaryColor'] as int),
+      topic: json['topic'] as String
     );
   }
 

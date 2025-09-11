@@ -6,7 +6,7 @@ class BackendNewsletter {
   final String topic;
   final String userId;
   final int articleCount;
-  final List<String> articles;
+  final List<String> articleIds; // Changed from articles to articleIds for clarity
   final DateTime createdAt;
   final bool saved;
 
@@ -16,7 +16,7 @@ class BackendNewsletter {
     required this.topic,
     required this.userId,
     required this.articleCount,
-    required this.articles,
+    required this.articleIds,
     required this.createdAt,
     required this.saved,
   });
@@ -28,7 +28,7 @@ class BackendNewsletter {
       topic: json['topic'] as String,
       userId: json['user_id'] as String,
       articleCount: json['article_count'] as int,
-      articles: (json['articles'] as List<dynamic>?)
+      articleIds: (json['articles'] as List<dynamic>?)
           ?.map((e) => e.toString())
           .toList() ?? [],
       saved: json['saved'] as bool,
@@ -43,7 +43,7 @@ class BackendNewsletter {
       'topic': topic,
       'user_id': userId,
       'article_count': articleCount,
-      'articles': articles,
+      'articles': articleIds,
       'created_at': createdAt.toIso8601String(),
       'saved': saved
     };
@@ -60,11 +60,21 @@ class NewsletterResponse {
   });
 
   factory NewsletterResponse.fromJson(Map<String, dynamic> json) {
+    // Handle the new API structure where newsletters come without articles
     return NewsletterResponse(
-      newsletter: BackendNewsletter.fromJson(json['newsletter'] as Map<String, dynamic>),
-      articles: (json['articles'] as List<dynamic>?)
-          ?.map((article) => Article.fromJson(article as Map<String, dynamic>))
-          .toList() ?? [],
+      newsletter: BackendNewsletter.fromJson(json),
+      articles: [], // Articles will be loaded separately
+    );
+  }
+  
+  // Create NewsletterResponse with separate articles
+  factory NewsletterResponse.withArticles({
+    required BackendNewsletter newsletter,
+    required List<Article> articles,
+  }) {
+    return NewsletterResponse(
+      newsletter: newsletter,
+      articles: articles,
     );
   }
 }

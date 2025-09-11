@@ -7,6 +7,7 @@ class Topic {
   final bool isActive;
   final Color primaryColor;
   final Color secondaryColor;
+  final int count; // Newsletter count for this topic
 
   Topic({
     required this.id,
@@ -15,6 +16,7 @@ class Topic {
     required this.isActive,
     required this.primaryColor,
     required this.secondaryColor,
+    this.count = 0, // Default to 0 if not provided
   });
 
   factory Topic.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class Topic {
       isActive: json['isActive'] as bool,
       primaryColor: Color(_parseColorString(json['primary-color'] as String)),
       secondaryColor: Color(_parseColorString(json['secondary-color'] as String)),
+      count: json['count'] as int? ?? 0,
     );
   }
 
@@ -85,6 +88,7 @@ class Topic {
       'isActive': isActive,
       'primary-color': '#${primaryColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
       'secondary-color': '#${secondaryColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
+      'count': count,
     };
   }
 }
