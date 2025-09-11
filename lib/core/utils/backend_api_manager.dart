@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../services/token_manager.dart';
 
-const String baseUrl = 'http://127.0.0.1:8000';
+const String baseUrl = 'https://d1q3s3lne7ucem.cloudfront.net';
 const Map<String, String> baseHeaders = {'Content-Type': 'application/json; charset=utf-8'};
 
 class BackendApiManager {
