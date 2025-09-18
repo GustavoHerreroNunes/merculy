@@ -104,11 +104,11 @@ class OnboardingFlow extends StatelessWidget {
         }
       case 4:
         return const NewsletterFormatOnboardingPage();
+      // case 5:
+      //   return const NewsletterFrequencyOnboardingPage();
       case 5:
-        return const NewsletterFrequencyOnboardingPage();
-      case 6:
         return const NewsletterChannelOnboardingPage();
-      case 7:
+      case 6:
         return OnboardingFinishedPage(
           onFinalize: () {
             // Use controller to advance to the final screen or handle completion
@@ -121,7 +121,7 @@ class OnboardingFlow extends StatelessWidget {
             );
           },
         );
-      case 8:
+      case 7:
         return const MyNewslettersScreen(); // Assuming this is the final destination after onboarding
 
       default:

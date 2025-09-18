@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../domain/entities/news_headline.dart';
 import '../../domain/entities/source.dart';
@@ -95,8 +96,11 @@ class ArticleDetailPage extends StatelessWidget {
                   
                   const SizedBox(height: 30),
                   
-                  // Conditionally show Bias Insights Chart (only for polarized news)
-                  if (article.isPolarized == true) ...[
+                  // Conditionally show Bias Insights Chart (only for polarized news with valid data)
+                  if (article.isPolarized == true && 
+                      article.biasInsights != null && 
+                      article.biasInsights!.isNotEmpty &&
+                      article.biasInsights!.values.any((value) => value > 0)) ...[
                     _buildBiasInsights(),
                     const SizedBox(height: 30),
                   ],
@@ -215,7 +219,12 @@ class ArticleDetailPage extends StatelessWidget {
   }
 
   Widget _buildBiasInsights() {
-    final biasData = article.biasInsights ?? {'Centro': 1, 'Esquerda': 3, 'Direita': 3};
+    final biasData = article.biasInsights;
+    
+    // Safety check - this method should only be called when data exists
+    if (biasData == null || biasData.isEmpty) {
+      return const SizedBox.shrink();
+    }
     
     // Calculate colors based on newsletter colors
     final centerColor = primaryColor;
@@ -333,15 +342,60 @@ class ArticleDetailPage extends StatelessWidget {
   }
 
   Widget _buildSourcesByBias() {
-    final sourcesByBias = article.sourcesByBias ?? {
-      'Centro': [],
-      'Esquerda': [],
-      'Direita': [],
-    };
+    final sourcesByBias = article.sourcesByBias;
+    
+    // Handle case where no sources data is available
+    if (sourcesByBias == null) {
+      // Show fallback sources from the basic article sources if available
+      if (article.sources.isNotEmpty) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Fontes (${article.sources.length})',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textDark,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ...article.sources.map((source) => _buildSourceCard(source, primaryColor)),
+          ],
+        );
+      } else {
+        // No sources at all, don't show this section
+        return const SizedBox.shrink();
+      }
+    }
 
     // Count total sources
     final allSources = sourcesByBias.values.expand((sources) => sources).toList();
     final totalSources = allSources.length;
+    
+    // If no sources in bias analysis but we have basic article sources, fall back
+    if (totalSources == 0 && article.sources.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Fontes (${article.sources.length})',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...article.sources.map((source) => _buildSourceCard(source, primaryColor)),
+        ],
+      );
+    }
+    
+    // If no sources at all, hide the section
+    if (totalSources == 0 && article.sources.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     if (article.isPolarized != true) {
       // Non-polarized news: show all sources together without subsection titles
@@ -491,80 +545,131 @@ class ArticleDetailPage extends StatelessWidget {
   }
 
   Widget _buildSourceCard(Source source, Color accentColor) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.05), // Light color background
-        borderRadius: BorderRadius.circular(12), // Rounded container
-        border: Border.all(
-          color: accentColor.withOpacity(0.1),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Source Icon
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: accentColor,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.language,
-              color: Colors.white,
-              size: 20,
-            ),
+    return GestureDetector(
+      onTap: () => _launchURL(source.articleLink),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: accentColor.withValues(alpha: 0.05), // Light color background
+          borderRadius: BorderRadius.circular(12), // Rounded container
+          border: Border.all(
+            color: accentColor.withValues(alpha: 0.1),
+            width: 1,
           ),
-          
-          const SizedBox(width: 12),
-          
-          // Source Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  source.title ?? 'Título não disponível',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Source Icon
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: accentColor,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.language,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            
+            const SizedBox(width: 12),
+            
+            // Source Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Source Name (prominent)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          source.fantasyName,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: accentColor,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        Icons.open_in_new,
+                        size: 16,
+                        color: accentColor.withValues(alpha: 0.7),
+                      ),
+                    ],
                   ),
-                ),
-                
-                const SizedBox(height: 8),
-                
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    border: Border(
-                      left: BorderSide(
-                        color: accentColor,
-                        width: 4, // Bold left border
+                  
+                  const SizedBox(height: 4),
+                  
+                  // Article Title
+                  if (source.title != null && source.title!.isNotEmpty) ...[
+                    Text(
+                      source.title!,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
                       ),
                     ),
-                    // Removed background color
-                  ),
-                  child: Text(
-                    source.quote ?? 'Citação não disponível',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textMedium,
-                      fontStyle: FontStyle.italic,
-                      height: 1.4,
+                    const SizedBox(height: 8),
+                  ],
+                  
+                  // Quote/Content
+                  if (source.quote != null && source.quote!.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          left: BorderSide(
+                            color: accentColor,
+                            width: 4, // Bold left border
+                          ),
+                        ),
+                      ),
+                      child: Text(
+                        source.quote!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textMedium,
+                          fontStyle: FontStyle.italic,
+                          height: 1.4,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+
+  /// Launch URL in external browser
+  Future<void> _launchURL(String url) async {
+    if (url.isEmpty) {
+      print('DEBUG: No URL provided for source');
+      return;
+    }
+    
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication, // Opens in external browser
+        );
+      } else {
+        print('DEBUG: Could not launch URL: $url');
+      }
+    } catch (e) {
+      print('DEBUG: Error launching URL $url: $e');
+    }
   }
 
   String _formatDate(DateTime date) {

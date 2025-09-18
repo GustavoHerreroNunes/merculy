@@ -190,70 +190,7 @@ class _InterestsSelectorComponentState extends State<InterestsSelectorComponent>
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
           );
-        }),
-        ..._otherControllers.asMap().entries.map((entry) {
-          int index = entry.key;
-          TextEditingController controller = entry.value;
-          FocusNode focusNode = _otherFocusNodes[index];
-          final hasText = controller.text.isNotEmpty;
-
-          return SizedBox(
-            width: 120, // Set a specific width to match chip size
-            height: 60, // Match the height of ChoiceChip more closely
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              style: TextStyle(
-                color: hasText ? AppColors.chipTextSelected : AppColors.chipTextUnselected,
-                fontWeight: FontWeight.bold,
-                fontSize: 14, // Match chip text size
-              ),
-              decoration: InputDecoration(
-                hintText: 'Outros...',
-                hintStyle: const TextStyle(
-                  color: AppColors.chipTextUnselected,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(
-                    color: AppColors.chipUnselected,
-                    width: 1.5,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(
-                    color: AppColors.chipUnselected,
-                    width: 1.5,
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                  borderSide: const BorderSide(
-                    color: AppColors.primary,
-                    width: 1.5,
-                  ),
-                ),
-                fillColor: hasText ? AppColors.chipSelected : Colors.white,
-                filled: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              onChanged: (text) {
-                setState(() {
-                  if (text.isNotEmpty && !_selectedInterests.contains(text)) {
-                    _selectedInterests.add(text);
-                  } else if (text.isEmpty && _selectedInterests.contains(text)) {
-                    _selectedInterests.remove(text);
-                  }
-                });
-                // Update the controller with the new selection
-                widget.controller.setInterests(_selectedInterests);
-              },
-            ),
-          );
-        }),
+        })
       ],
     );
   }

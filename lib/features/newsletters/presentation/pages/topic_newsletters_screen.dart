@@ -26,6 +26,7 @@ class TopicNewslettersScreen extends StatefulWidget {
 class _TopicNewslettersScreenState extends State<TopicNewslettersScreen> {
   List<Newsletter> _newsletters = [];
   bool _isLoading = false;
+  bool _isGenerating = false;
   String? _error;
 
   @override
@@ -99,6 +100,44 @@ class _TopicNewslettersScreenState extends State<TopicNewslettersScreen> {
     }
   }
 
+  Future<void> _generateNewsletter() async {
+    setState(() {
+      _isGenerating = true;
+    });
+
+    try {
+      await NewsletterService.generateNewsletter(topic: widget.topicId);
+      
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Newsletter de ${widget.topicName} gerada com sucesso!'),
+            backgroundColor: widget.topicColor,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      
+      // Refresh the newsletters list
+      await _loadNewsletters();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao gerar newsletter: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      setState(() {
+        _isGenerating = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -166,6 +205,60 @@ class _TopicNewslettersScreenState extends State<TopicNewslettersScreen> {
               ),
             ),
 
+            const SizedBox(height: 24),
+
+            // Generate Newsletter Button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isGenerating ? null : _generateNewsletter,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.topicColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isGenerating
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text('Gerando Newsletter de ${widget.topicName}...'),
+                          ],
+                        )
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              widget.topicIcon,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Gerar Newsletter de ${widget.topicName}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+            
             const SizedBox(height: 24),
             
             // Content

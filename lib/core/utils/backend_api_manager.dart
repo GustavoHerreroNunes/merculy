@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../services/token_manager.dart';
 
-const String baseUrl = 'https://d1q3s3lne7ucem.cloudfront.net';
+const String baseUrl = 'http://127.0.0.1:8000';
 const Map<String, String> baseHeaders = {'Content-Type': 'application/json; charset=utf-8'};
 
 class BackendApiManager {
@@ -327,9 +327,13 @@ class BackendApiManager {
   }
 
   // Generate a new newsletter for the user
-  static Future<Map<String, dynamic>> generateNewsletter() async {
+  static Future<Map<String, dynamic>> generateNewsletter({String? topic}) async {
     try {
-      final url = Uri.parse('$baseUrl/api/newsletter/generate');
+      String urlPath = '/api/newsletter/generate';
+      if (topic != null && topic.isNotEmpty) {
+        urlPath += '?topic=$topic';
+      }
+      final url = Uri.parse('$baseUrl$urlPath');
       
       final headers = <String, String>{
         ...baseHeaders,

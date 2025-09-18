@@ -17,7 +17,6 @@ class MyNewslettersScreen extends StatefulWidget {
 class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
   List<Topic> _userTopics = [];
   bool _isLoading = false;
-  bool _isGenerating = false;
   String? _error;
 
   @override
@@ -42,42 +41,6 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
       setState(() {
         _error = e.toString();
         _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _generateNewsletter() async {
-    setState(() {
-      _isGenerating = true;
-    });
-
-    try {
-      await NewsletterService.generateNewsletter();
-      
-      // Show success message
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Newsletter gerada com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-      
-      // Refresh the topics (in case new ones were added)
-      await _loadUserTopics();
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erro ao gerar newsletter: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      setState(() {
-        _isGenerating = false;
       });
     }
   }
@@ -123,50 +86,6 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
               ),
             ),
 
-            // Generate Newsletter Button
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isGenerating ? null : _generateNewsletter,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: _isGenerating
-                      ? const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                              ),
-                            ),
-                            SizedBox(width: 12),
-                            Text('Gerando Newsletter...'),
-                          ],
-                        )
-                      : const Text(
-                          'Gerar Nova Newsletter',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                ),
-              ),
-            ),
-            
-            const SizedBox(height: 24),
-            
             // Content
             Expanded(
               child: _buildContent(),
@@ -233,9 +152,35 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
     // Create list of topics including user topics + customized newsletters topic
     List<Widget> topicCards = [];
     
-    // Add user topic cards
+    // Find the "personalizada" topic first
+    final personalizedTopic = _userTopics.firstWhere(
+      (topic) => topic.id == 'personalizada',
+      orElse: () => Topic(
+        id: 'personalizada',
+        name: 'Personalizadas',
+        icon: 'auto_awesome',
+        primaryColor: AppColors.primary,
+        secondaryColor: AppColors.primary.withValues(alpha: 0.1),
+        isActive: true,
+        count: 0,
+      ),
+    );
+    
+    // Add "Personalizadas" first
+    topicCards.add(
+      NewsTopicCard(
+        topic: 'Personalizadas',
+        icon: Icons.auto_awesome,
+        primaryColor: AppColors.primary,
+        secondaryColor: AppColors.primary.withValues(alpha: 0.1),
+        newsletterCount: personalizedTopic.count,
+        onTap: () => _navigateToCustomizedNewsletters(),
+      ),
+    );
+    
+    // Add other topics (excluding "personalizada" since we already added it)
     for (var topic in _userTopics) {
-      if(topic.id != "personalizada"){
+      if (topic.id != "personalizada") {
         topicCards.add(
           NewsTopicCard(
             topic: topic.name,
@@ -246,48 +191,8 @@ class _MyNewslettersScreenState extends State<MyNewslettersScreen> {
             onTap: () => _navigateToTopic(topic),
           ),
         );
-      }else{
-        topicCards.add(
-          NewsTopicCard(
-            topic: 'Personalizadas',
-            icon: Icons.auto_awesome,
-            primaryColor: AppColors.primary,
-            secondaryColor: AppColors.primary.withOpacity(0.1),
-            newsletterCount: topic.count,
-            onTap: () => _navigateToCustomizedNewsletters(),
-          ),
-        );
       }
-      
     }
-    
-    // // Add customized newsletters topic if there are any personalized newsletters
-    // final personalizedTopic = _userTopics.firstWhere(
-    //   (topic) => topic.id == 'personalizada',
-    //   orElse: () => Topic(
-    //     id: 'personalizada',
-    //     name: 'Personalizadas',
-    //     icon: 'auto_awesome',
-    //     primaryColor: AppColors.primary,
-    //     secondaryColor: AppColors.primary.withOpacity(0.1),
-    //     isActive: true,
-    //     count: 0,
-    //   ),
-    // );
-    
-    // // Only show personalized if we found it in the response or if we have no other topics
-    // if (_userTopics.any((topic) => topic.id == 'personalizada') || _userTopics.isEmpty) {
-    //   topicCards.add(
-    //     NewsTopicCard(
-    //       topic: 'Personalizadas',
-    //       icon: Icons.auto_awesome,
-    //       primaryColor: AppColors.primary,
-    //       secondaryColor: AppColors.primary.withOpacity(0.1),
-    //       newsletterCount: personalizedTopic.count,
-    //       onTap: () => _navigateToCustomizedNewsletters(),
-    //     ),
-    //   );
-    // }
 
     if (topicCards.isEmpty) {
       return Center(

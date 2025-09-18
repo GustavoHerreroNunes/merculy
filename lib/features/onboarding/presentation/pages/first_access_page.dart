@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/constants/color_palette.dart';
 import '../../../../core/services/google_sign_in_service.dart';
@@ -7,6 +8,7 @@ import '../onboarding_controller.dart';
 import '../onboarding_state.dart';
 import '../../domain/entities/user.dart';
 import 'interests_onboarding_page.dart';
+import 'terms_of_service_page.dart';
 import '../../../newsletters/presentation/pages/my_newsletters_screen.dart';
 
 class FirstAccessPage extends StatefulWidget {
@@ -164,24 +166,40 @@ class _FirstAccessPageState extends State<FirstAccessPage> {
                   ),
                   children: <TextSpan>[
                     const TextSpan(
-                      text: 'By continuing, you agree to our ',
+                      text: 'Ao continuar, você concorda com nossos ',
                     ),
                     TextSpan(
-                      text: 'Terms of Services',
+                      text: 'Termos de Uso',
                       style: TextStyle(
                         color: AppColors.primary,
                         decoration: TextDecoration.underline,
                       ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const TermsOfServicePage(),
+                            ),
+                          );
+                        },
                     ),
                     const TextSpan(
-                      text: ' and ',
+                      text: ' e ',
                     ),
                     TextSpan(
-                      text: 'Private Policy.',
+                      text: 'Política de Privacidade.',
                       style: TextStyle(
                         color: AppColors.primary,
                         decoration: TextDecoration.underline,
                       ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const TermsOfServicePage(),
+                            ),
+                          );
+                        },
                     ),
                   ],
                 ),
@@ -286,71 +304,6 @@ class _FirstAccessPageState extends State<FirstAccessPage> {
                     ),
                     elevation: 0,
                     side: const BorderSide(color: AppColors.border, width: 1.0),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Implement Facebook login
-                  },
-                  icon: Image.network(
-                    'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/2021_Facebook_icon.svg/1200px-2021_Facebook_icon.svg.png',
-                    height: 24.0,
-                    width: 24.0,
-                  ),
-                  label: const Text(
-                    'Continue com Facebook',
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.buttonFacebook,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    elevation: 0,
-                    side: const BorderSide(color: AppColors.border, width: 1.0),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Implement Apple login
-                  },
-                  icon: Image.network(
-                    'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Apple_logo_black.svg/1200px-Apple_logo_black.svg.png',
-                    height: 24.0,
-                    width: 24.0,
-                    color: Colors.black54,
-                  ),
-                  label: const Text(
-                    'Continue com Apple',
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.buttonApple,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    elevation: 0,
-                    side: const BorderSide(color: AppColors.buttonAppleBorder, width: 1.0),
                   ),
                 ),
               ),

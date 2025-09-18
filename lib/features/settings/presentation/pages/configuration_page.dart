@@ -468,31 +468,31 @@ class _ConfigurationPageState extends State<ConfigurationPage> {
           
           const SizedBox(height: 24),
           
-          // Days of Week Subsection
-          const Text(
-            'Dias da Semana',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          WeekdaySelectorComponent(controller: controller),
+          // // Days of Week Subsection
+          // const Text(
+          //   'Dias da Semana',
+          //   style: TextStyle(
+          //     fontSize: 16,
+          //     fontWeight: FontWeight.w600,
+          //     color: AppColors.textDark,
+          //   ),
+          // ),
+          // const SizedBox(height: 12),
+          // WeekdaySelectorComponent(controller: controller),
           
-          const SizedBox(height: 24),
+          // const SizedBox(height: 24),
           
-          // Time of Day Subsection
-          const Text(
-            'Horário do Dia',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 12),
-          TimeSelectorComponent(controller: controller),
+          // // Time of Day Subsection
+          // const Text(
+          //   'Horário do Dia',
+          //   style: TextStyle(
+          //     fontSize: 16,
+          //     fontWeight: FontWeight.w600,
+          //     color: AppColors.textDark,
+          //   ),
+          // ),
+          // const SizedBox(height: 12),
+          // TimeSelectorComponent(controller: controller),
         ],
       ),
     );

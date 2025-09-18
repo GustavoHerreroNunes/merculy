@@ -170,16 +170,16 @@ class _NewsletterDetailPageState extends State<NewsletterDetailPage> {
                 ),
               ),
             ),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.share, color: Colors.white),
-                onPressed: () => _shareNewsletter(),
-              ),
-            ],
+            // leading: IconButton(
+            //   icon: const Icon(Icons.arrow_back, color: Colors.white),
+            //   onPressed: () => Navigator.of(context).pop(),
+            // ),
+            // actions: [
+            //   IconButton(
+            //     icon: const Icon(Icons.share, color: Colors.white),
+            //     onPressed: () => _shareNewsletter(),
+            //   ),
+            // ],
           ),
           
           // Content
@@ -300,22 +300,22 @@ class _NewsletterDetailPageState extends State<NewsletterDetailPage> {
                   ],
                   
                   // Share Button (always visible)
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _shareNewsletter,
-                      icon: const Icon(Icons.share),
-                      label: const Text('Compartilhar Newsletter'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: widget.newsletter.primaryColor,
-                        side: BorderSide(color: widget.newsletter.primaryColor),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ),
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   child: OutlinedButton.icon(
+                  //     onPressed: _shareNewsletter,
+                  //     icon: const Icon(Icons.share),
+                  //     label: const Text('Compartilhar Newsletter'),
+                  //     style: OutlinedButton.styleFrom(
+                  //       foregroundColor: widget.newsletter.primaryColor,
+                  //       side: BorderSide(color: widget.newsletter.primaryColor),
+                  //       padding: const EdgeInsets.symmetric(vertical: 16),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(12),
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                   
                   const SizedBox(height: 24),
                 ],

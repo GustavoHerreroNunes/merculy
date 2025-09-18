@@ -14,9 +14,11 @@ class NewsletterService {
   static const Duration _cacheExpiry = Duration(minutes: 30);
 
   /// Generate a new newsletter for the current user
-  static Future<void> generateNewsletter() async {
+  static Future<void> generateNewsletter({String? topic}) async {
     try {
-      await BackendApiManager.generateNewsletter();
+      // Don't pass topic parameter for 'personalizada' - let it generate personalized newsletter
+      final topicToPass = (topic == 'personalizada') ? null : topic;
+      await BackendApiManager.generateNewsletter(topic: topicToPass);
     } catch (e) {
       rethrow;
     }
@@ -74,14 +76,8 @@ class NewsletterService {
       print('[DEBUG] Seeking news for $topicId');
       // Get all newsletters and filter by topic
       final allNewsletters = await getNewsletters(saved: false, topic: topicId);
-      
-      // Filter newsletters by topic (for now we'll get all since the backend doesn't have topic filtering yet)
-      // In the future, this should be a separate API call
-      return allNewsletters.where((newsletter) {
-        // This is a placeholder - we'd need backend support for topic filtering
-        // For now, return all newsletters
-        return true;
-      }).toList();
+    
+      return allNewsletters;
     } catch (e) {
       throw Exception('Failed to load newsletters for topic $topicId: $e');
     }
@@ -233,8 +229,14 @@ class NewsletterService {
       }
 
       return articlesData
-          .map((articleData) => Article.fromJson(articleData as Map<String, dynamic>))
-          .map((article) => _convertToNewsHeadline(article))
+          .asMap()
+          .entries
+          .map((entry) {
+            final index = entry.key;
+            final articleData = entry.value;
+            final article = Article.fromJson(articleData as Map<String, dynamic>);
+            return _convertToNewsHeadline(article, index);
+          })
           .toList();
     } catch (e) {
       print('DEBUG - Error loading newsletter articles: $e');
@@ -303,10 +305,151 @@ class NewsletterService {
   }
 
   /// Convert Article to NewsHeadline
-  static NewsHeadline _convertToNewsHeadline(Article article) {
-    print('DEBUG: Converting article "${article.title}"');
+  static NewsHeadline _convertToNewsHeadline(Article article, int index) {
+    print('DEBUG: Converting article "${article.title}" at index $index');
     print('DEBUG: Article imageUrl: "${article.imageUrl}"');
     print('DEBUG: Article summary: "${article.summary}"');
+    print('DEBUG: Article bias_analysis_status: "${article.biasAnalysisStatus}"');
+    
+    // Determine if this article should have bias analysis
+    // Only the first 3 articles (index 0, 1, 2) are eligible for bias analysis
+    final isEligibleForBiasAnalysis = index < 3;
+    final hasBiasAnalysis = article.biasAnalysisStatus == 'available' && 
+                           article.biasAnalysis != null;
+    
+    // Process bias insights and sources by bias if available
+    Map<String, int>? biasInsights;
+    Map<String, List<Source>>? sourcesByBias;
+    bool? isPolarized;
+    
+    if (isEligibleForBiasAnalysis && hasBiasAnalysis) {
+      try {
+        final biasAnalysis = article.biasAnalysis!;
+        
+        // Only process if we have actual bias data
+        final hasValidBiasData = biasAnalysis.biasDistribution.centro > 0 ||
+                                biasAnalysis.biasDistribution.esquerda > 0 ||
+                                biasAnalysis.biasDistribution.direita > 0;
+        
+        if (hasValidBiasData) {
+          // Convert bias distribution to the format expected by the UI
+          biasInsights = {
+            'Centro': biasAnalysis.biasDistribution.centro,
+            'Esquerda': biasAnalysis.biasDistribution.esquerda,
+            'Direita': biasAnalysis.biasDistribution.direita,
+          };
+          
+          // Group related sources by political bias
+          sourcesByBias = {
+            'Centro': <Source>[],
+            'Esquerda': <Source>[],
+            'Direita': <Source>[],
+          };
+          
+          // Process related sources if they exist
+          if (biasAnalysis.relatedSources.isNotEmpty) {
+            for (final relatedSource in biasAnalysis.relatedSources) {
+              try {
+                final relatedSourceUrl = relatedSource.url ?? '';
+                final source = Source(
+                  websiteRoot: _extractDomain(relatedSourceUrl),
+                  fantasyName: relatedSource.source.isNotEmpty ? relatedSource.source : 'Fonte desconhecida',
+                  articleLink: relatedSourceUrl,
+                  title: relatedSource.title.isNotEmpty ? relatedSource.title : null,
+                  quote: relatedSource.newsQuote.isNotEmpty ? relatedSource.newsQuote : null,
+                );
+                
+                // Map political bias to the corresponding group
+                String biasKey;
+                switch (relatedSource.politicalBias.toLowerCase()) {
+                  case 'centro':
+                    biasKey = 'Centro';
+                    break;
+                  case 'esquerda':
+                    biasKey = 'Esquerda';
+                    break;
+                  case 'direita':
+                    biasKey = 'Direita';
+                    break;
+                  default:
+                    biasKey = 'Centro'; // Default fallback
+                }
+                
+                sourcesByBias[biasKey]?.add(source);
+              } catch (e) {
+                print('DEBUG: Error processing related source: $e');
+                // Continue processing other sources even if one fails
+              }
+            }
+          }
+          
+          // Add the article's own source to the appropriate bias group if available
+          if (article.source != null && article.source!.isNotEmpty) {
+            try {
+              final articleSource = Source(
+                websiteRoot: _extractDomain(article.url ?? ''),
+                fantasyName: article.source!,
+                articleLink: article.url ?? '',
+                title: article.title,
+                quote: article.summary,
+              );
+              
+              // Determine which bias group to add the article's source to
+              String articleBiasKey;
+              if (article.politicalBias != null) {
+                switch (article.politicalBias!.toLowerCase()) {
+                  case 'centro':
+                    articleBiasKey = 'Centro';
+                    break;
+                  case 'esquerda':
+                    articleBiasKey = 'Esquerda';
+                    break;
+                  case 'direita':
+                    articleBiasKey = 'Direita';
+                    break;
+                  default:
+                    articleBiasKey = 'Centro'; // Default fallback
+                }
+              } else {
+                articleBiasKey = 'Centro'; // Default fallback when no political bias is specified
+              }
+              
+              // Add the article source to the appropriate bias group
+              sourcesByBias[articleBiasKey]?.add(articleSource);
+              
+              print('DEBUG: Added article source "${article.source}" to bias group "$articleBiasKey"');
+            } catch (e) {
+              print('DEBUG: Error adding article source: $e');
+            }
+          }
+          
+          // Determine if the article is polarized
+          // An article is considered polarized if it has sources with different political biases
+          final hasLeftSources = biasAnalysis.biasDistribution.esquerda > 0;
+          final hasCenterSources = biasAnalysis.biasDistribution.centro > 0;
+          final hasRightSources = biasAnalysis.biasDistribution.direita > 0;
+          
+          // Count different bias categories
+          final biasCategories = [hasLeftSources, hasCenterSources, hasRightSources]
+              .where((hasSource) => hasSource)
+              .length;
+          
+          isPolarized = biasCategories > 1; // Polarized if sources from multiple biases
+        } else {
+          // No valid bias data, treat as non-polarized
+          isPolarized = false;
+        }
+      } catch (e) {
+        print('DEBUG: Error processing bias analysis: $e');
+        // If there's any error processing bias analysis, treat as non-polarized
+        isPolarized = false;
+        biasInsights = null;
+        sourcesByBias = null;
+      }
+    } else {
+      // For articles not eligible for bias analysis or without bias data
+      isPolarized = false;
+    }
     
     final newsHeadline = NewsHeadline(
       title: article.title,
@@ -324,10 +467,13 @@ class NewsletterService {
       ],
       publishedAt: article.publishedAt ?? article.createdAt,
       fullText: article.content,
-      isPolarized: article.politicalBias != null,
+      isPolarized: isPolarized,
+      biasInsights: biasInsights,
+      sourcesByBias: sourcesByBias,
     );
     
     print('DEBUG: Created NewsHeadline with coverImage: "${newsHeadline.coverImage}"');
+    print('DEBUG: isPolarized: $isPolarized, isEligibleForBiasAnalysis: $isEligibleForBiasAnalysis');
     return newsHeadline;
   }
 
